@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pharma & Life Sciences — Shivam Asthana BA Portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Source+Sans+3:wght@300;400;500;600&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#F8F6F1; --surface:#FFFFFF; --border:#E2DED6; --border2:#C8C4BA;
+    --text:#141414; --muted:#6A6660; --faint:#9A9690;
+    --accent:#2E7D55; --ink:#0D0D0D;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{background:var(--bg);color:var(--text);font-family:'Source Sans 3',sans-serif;font-weight:300;line-height:1.75;font-size:16px;}
+
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(248,246,241,0.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:0 56px;height:56px;display:flex;align-items:center;justify-content:space-between;}
+  .nav-logo{font-family:'Playfair Display',serif;font-size:16px;font-weight:500;color:var(--text);text-decoration:none;}
+  .nav-links{display:flex;align-items:center;gap:32px;list-style:none;}
+  .nav-links a{font-size:13px;font-weight:400;color:var(--muted);text-decoration:none;transition:color 0.2s;}
+  .nav-links a:hover{color:var(--text);}
+
+  .page-header{padding:120px 56px 64px;background:var(--ink);position:relative;overflow:hidden;}
+  .page-header::before{content:'';position:absolute;inset:0;background-image:linear-gradient(#222 1px,transparent 1px),linear-gradient(90deg,#222 1px,transparent 1px);background-size:48px 48px;opacity:0.5;}
+  .page-header::after{content:'';position:absolute;top:56px;left:0;width:4px;height:120px;background:var(--accent);}
+  .breadcrumb{font-family:'Source Code Pro',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#555;margin-bottom:20px;display:flex;align-items:center;gap:8px;position:relative;z-index:1;}
+  .breadcrumb a{color:#555;text-decoration:none;}
+  .breadcrumb a:hover{color:#aaa;}
+  .page-title{font-family:'Playfair Display',serif;font-size:clamp(36px,5vw,60px);font-weight:400;color:#fff;letter-spacing:-0.02em;margin-bottom:16px;position:relative;z-index:1;}
+  .page-title em{font-style:italic;color:#4CAF7D;}
+  .page-sub{font-size:16px;color:#888;max-width:560px;line-height:1.65;position:relative;z-index:1;}
+  .page-tag{font-family:'Source Code Pro',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;padding:4px 10px;border-radius:2px;background:#1a2e1a;color:#4CAF7D;border:1px solid #2a3e2a;display:inline-block;margin-bottom:16px;position:relative;z-index:1;}
+
+  .cases-section{padding:80px 56px;}
+  .cases-inner{max-width:1100px;margin:0 auto;}
+  .cases-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px;}
+
+  .case-card{background:var(--surface);border:1px solid var(--border);border-radius:3px;overflow:hidden;text-decoration:none;display:block;transition:border-color 0.25s,box-shadow 0.25s,transform 0.25s;}
+  .case-card:hover{border-color:var(--accent);box-shadow:0 4px 24px rgba(46,125,85,0.08);transform:translateY(-2px);}
+  .case-card-top{padding:32px;border-bottom:1px solid var(--border);}
+  .case-num{font-family:'Source Code Pro',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--faint);margin-bottom:10px;}
+  .case-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:400;color:var(--text);letter-spacing:-0.01em;margin-bottom:8px;line-height:1.25;}
+  .case-title em{font-style:italic;color:var(--accent);}
+  .case-desc{font-size:13.5px;color:var(--muted);line-height:1.65;}
+  .case-card-bottom{padding:20px 32px;display:flex;align-items:center;justify-content:space-between;background:#FDFCF9;}
+  .case-tags{display:flex;gap:8px;flex-wrap:wrap;}
+  .case-tag{font-family:'Source Code Pro',monospace;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;padding:3px 8px;border:1px solid var(--border);border-radius:2px;color:var(--faint);}
+  .case-link{font-family:'Source Code Pro',monospace;font-size:11px;color:var(--accent);display:flex;align-items:center;gap:6px;white-space:nowrap;}
+  .case-link svg{transition:transform 0.2s;}
+  .case-card:hover .case-link svg{transform:translateX(3px);}
+
+  .case-card.c1 .case-card-top{border-top:3px solid #C0392B;}
+  .case-card.c2 .case-card-top{border-top:3px solid #C07A1A;}
+  .case-card.c3 .case-card-top{border-top:3px solid #2E7D55;}
+  .case-card.c4 .case-card-top{border-top:3px solid #1C3F6E;}
+
+  .back-bar{padding:20px 56px;border-bottom:1px solid var(--border);background:var(--surface);}
+  .back-link{font-family:'Source Code Pro',monospace;font-size:11px;letter-spacing:0.06em;color:var(--muted);text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:color 0.2s;}
+  .back-link:hover{color:var(--accent);}
+
+  footer{background:var(--ink);padding:32px 56px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;}
+  .footer-left{font-family:'Playfair Display',serif;font-size:15px;color:#fff;}
+  .footer-right{font-family:'Source Code Pro',monospace;font-size:11px;color:#555;letter-spacing:0.06em;}
+
+  @media(max-width:800px){
+    nav{padding:0 24px;}
+    .page-header{padding:100px 24px 48px;}
+    .cases-section{padding:48px 24px;}
+    .cases-grid{grid-template-columns:1fr;}
+    .back-bar{padding:16px 24px;}
+    footer{padding:24px;}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">Shivam Asthana</a>
+  <ul class="nav-links">
+    <li><a href="index.html#about">About</a></li>
+    <li><a href="index.html#work">All Sectors</a></li>
+    <li><a href="index.html#approach">Approach</a></li>
+  </ul>
+</nav>
+
+<div class="back-bar">
+  <a href="index.html" class="back-link">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M12 7H2M7 2L2 7l5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Back to all sectors
+  </a>
+</div>
+
+<div class="page-header">
+  <div class="breadcrumb">
+    <a href="index.html">Portfolio</a>
+    <span>›</span>
+    <span>Pharma & Life Sciences</span>
+  </div>
+  <span class="page-tag">4 Cases Live</span>
+  <h1 class="page-title">Pharma & <em>Life Sciences</em></h1>
+  <p class="page-sub">
+    Four case studies across manufacturing quality, commercial data fragmentation, drug launch economics, and supply chain resilience. Built on EMA data, IQVIA benchmarks, AMNOG/HTA frameworks, and verified pharmaceutical supply chain sources.
+  </p>
+</div>
+
+<section class="cases-section">
+  <div class="cases-inner">
+    <div class="cases-grid">
+
+      <a href="pharma_case1_batch_failure.html" class="case-card c1">
+        <div class="case-card-top">
+          <div class="case-num">Pharma · Case 01 of 04</div>
+          <div class="case-title">Why Is This <em>Batch Failing?</em></div>
+          <p class="case-desc">A GMP-certified European pharma manufacturer is seeing a 12% batch failure rate — four times the industry benchmark of 3%. The quality team suspects equipment, but the data points elsewhere. This case uses root cause analysis to identify where failures cluster and what is actually driving them.</p>
+        </div>
+        <div class="case-card-bottom">
+          <div class="case-tags">
+            <span class="case-tag">Root Cause</span>
+            <span class="case-tag">GMP</span>
+            <span class="case-tag">Quality</span>
+          </div>
+          <span class="case-link">
+            Read case
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+        </div>
+      </a>
+
+      <a href="pharma_case2_hcp_engagement.html" class="case-card c2">
+        <div class="case-card-top">
+          <div class="case-num">Pharma · Case 02 of 04</div>
+          <div class="case-title">Why Are We <em>Losing HCPs?</em></div>
+          <p class="case-desc">HCP engagement scores have declined for three consecutive years. Sales, medical affairs, and marketing each maintain separate data systems with no unified view of HCP interactions. This case maps the fragmentation, defines requirements for a unified HCP data model, and segments which HCPs to prioritise and through which channel.</p>
+        </div>
+        <div class="case-card-bottom">
+          <div class="case-tags">
+            <span class="case-tag">Data Integration</span>
+            <span class="case-tag">HCP Segmentation</span>
+            <span class="case-tag">Requirements</span>
+          </div>
+          <span class="case-link">
+            Read case
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+        </div>
+      </a>
+
+      <a href="pharma_case3_market_access.html" class="case-card c3">
+        <div class="case-card-top">
+          <div class="case-num">Pharma · Case 03 of 04</div>
+          <div class="case-title">Can We <em>Afford to Launch?</em></div>
+          <p class="case-desc">A specialty drug is preparing to launch across Germany, France, and the Netherlands. The market access team needs to map HTA reimbursement pathways, benchmark competitor pricing, and stress-test revenue projections under different reimbursement outcomes. This case builds the pricing scenario model.</p>
+        </div>
+        <div class="case-card-bottom">
+          <div class="case-tags">
+            <span class="case-tag">Market Access</span>
+            <span class="case-tag">HTA / AMNOG</span>
+            <span class="case-tag">Pricing</span>
+          </div>
+          <span class="case-link">
+            Read case
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+        </div>
+      </a>
+
+      <a href="pharma_case4_supply_chain.html" class="case-card c4">
+        <div class="case-card-top">
+          <div class="case-num">Pharma · Case 04 of 04</div>
+          <div class="case-title">Fixing the Supply Chain <em>Before the Product Runs Out</em></div>
+          <p class="case-desc">A high-volume generic drug has experienced three stockout events in 18 months across Germany, Poland, Austria, and Czech Republic. The supply chain team suspects demand forecast errors, supplier lead time variability, and inadequate safety stock — but has no structured analysis to confirm this.</p>
+        </div>
+        <div class="case-card-bottom">
+          <div class="case-tags">
+            <span class="case-tag">Supply Chain</span>
+            <span class="case-tag">Demand Forecasting</span>
+            <span class="case-tag">Inventory</span>
+          </div>
+          <span class="case-link">
+            Read case
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-left">Shivam Asthana — Business Analysis Portfolio</div>
+  <div class="footer-right">Pharma & Life Sciences · 8 of 20 cases</div>
+</footer>
+
+</body>
+</html>

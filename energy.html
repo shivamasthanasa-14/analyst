@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Energy & Utilities — Shivam Asthana BA Portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Source+Sans+3:wght@300;400;500;600&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#F8F6F1; --surface:#FFFFFF; --border:#E2DED6; --border2:#C8C4BA;
+    --text:#141414; --muted:#6A6660; --faint:#9A9690;
+    --accent:#1C3F6E; --green:#2E7D55; --red:#C0392B; --amber:#C07A1A;
+    --ink:#0D0D0D;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{background:var(--bg);color:var(--text);font-family:'Source Sans 3',sans-serif;font-weight:300;line-height:1.75;font-size:16px;}
+
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(248,246,241,0.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:0 56px;height:56px;display:flex;align-items:center;justify-content:space-between;}
+  .nav-logo{font-family:'Playfair Display',serif;font-size:16px;font-weight:500;color:var(--text);text-decoration:none;}
+  .nav-links{display:flex;align-items:center;gap:32px;list-style:none;}
+  .nav-links a{font-size:13px;font-weight:400;color:var(--muted);text-decoration:none;transition:color 0.2s;}
+  .nav-links a:hover{color:var(--text);}
+
+  /* PAGE HEADER */
+  .page-header{
+    padding: 120px 56px 64px;
+    background: var(--ink);
+    position: relative; overflow: hidden;
+  }
+  .page-header::before{
+    content:'';position:absolute;inset:0;
+    background-image:linear-gradient(#222 1px,transparent 1px),linear-gradient(90deg,#222 1px,transparent 1px);
+    background-size:48px 48px;opacity:0.5;
+  }
+  .page-header::after{
+    content:'';position:absolute;top:56px;left:0;
+    width:4px;height:120px;background:var(--accent);
+  }
+  .breadcrumb{
+    font-family:'Source Code Pro',monospace;
+    font-size:11px;letter-spacing:0.1em;text-transform:uppercase;
+    color:#555;margin-bottom:20px;
+    display:flex;align-items:center;gap:8px;
+    position:relative;z-index:1;
+  }
+  .breadcrumb a{color:#555;text-decoration:none;}
+  .breadcrumb a:hover{color:#aaa;}
+  .page-title{
+    font-family:'Playfair Display',serif;
+    font-size:clamp(36px,5vw,60px);font-weight:400;
+    color:#fff;letter-spacing:-0.02em;
+    margin-bottom:16px;
+    position:relative;z-index:1;
+  }
+  .page-title em{font-style:italic;color:#5B9BD5;}
+  .page-sub{
+    font-size:16px;color:#888;max-width:560px;
+    line-height:1.65;position:relative;z-index:1;
+  }
+  .page-tag{
+    font-family:'Source Code Pro',monospace;
+    font-size:9px;letter-spacing:0.1em;text-transform:uppercase;
+    padding:4px 10px;border-radius:2px;
+    background:#1a2e1a;color:#4CAF7D;border:1px solid #2a3e2a;
+    display:inline-block;margin-bottom:16px;
+    position:relative;z-index:1;
+  }
+
+  /* CASES GRID */
+  .cases-section{padding:80px 56px;}
+  .cases-inner{max-width:1100px;margin:0 auto;}
+
+  .cases-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:24px;
+  }
+
+  .case-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:3px;
+    overflow:hidden;
+    text-decoration:none;
+    display:block;
+    transition:border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+  }
+  .case-card:hover{
+    border-color:var(--accent);
+    box-shadow:0 4px 24px rgba(28,63,110,0.08);
+    transform:translateY(-2px);
+  }
+
+  .case-card-top{
+    padding:32px;
+    border-bottom:1px solid var(--border);
+  }
+  .case-num{
+    font-family:'Source Code Pro',monospace;
+    font-size:10px;letter-spacing:0.1em;text-transform:uppercase;
+    color:var(--faint);margin-bottom:10px;
+  }
+  .case-title{
+    font-family:'Playfair Display',serif;
+    font-size:22px;font-weight:400;
+    color:var(--text);letter-spacing:-0.01em;
+    margin-bottom:8px;line-height:1.25;
+  }
+  .case-title em{font-style:italic;color:var(--accent);}
+  .case-desc{
+    font-size:13.5px;color:var(--muted);
+    line-height:1.65;
+  }
+
+  .case-card-bottom{
+    padding:20px 32px;
+    display:flex;align-items:center;justify-content:space-between;
+    background:#FDFCF9;
+  }
+  .case-tags{display:flex;gap:8px;flex-wrap:wrap;}
+  .case-tag{
+    font-family:'Source Code Pro',monospace;
+    font-size:10px;letter-spacing:0.06em;text-transform:uppercase;
+    padding:3px 8px;border:1px solid var(--border);
+    border-radius:2px;color:var(--faint);
+  }
+  .case-link{
+    font-family:'Source Code Pro',monospace;
+    font-size:11px;color:var(--accent);
+    display:flex;align-items:center;gap:6px;
+    white-space:nowrap;
+  }
+  .case-link svg{transition:transform 0.2s;}
+  .case-card:hover .case-link svg{transform:translateX(3px);}
+
+  /* COLOR ACCENTS per case */
+  .case-card.c1 .case-card-top{border-top:3px solid #C0392B;}
+  .case-card.c2 .case-card-top{border-top:3px solid #C07A1A;}
+  .case-card.c3 .case-card-top{border-top:3px solid #2E7D55;}
+  .case-card.c4 .case-card-top{border-top:3px solid #1C3F6E;}
+
+  /* BACK LINK */
+  .back-bar{
+    padding:20px 56px;
+    border-bottom:1px solid var(--border);
+    background:var(--surface);
+  }
+  .back-link{
+    font-family:'Source Code Pro',monospace;
+    font-size:11px;letter-spacing:0.06em;
+    color:var(--muted);text-decoration:none;
+    display:inline-flex;align-items:center;gap:8px;
+    transition:color 0.2s;
+  }
+  .back-link:hover{color:var(--accent);}
+
+  footer{background:var(--ink);padding:32px 56px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;}
+  .footer-left{font-family:'Playfair Display',serif;font-size:15px;color:#fff;}
+  .footer-right{font-family:'Source Code Pro',monospace;font-size:11px;color:#555;letter-spacing:0.06em;}
+
+  @media(max-width:800px){
+    nav{padding:0 24px;}
+    .page-header{padding:100px 24px 48px;}
+    .cases-section{padding:48px 24px;}
+    .cases-grid{grid-template-columns:1fr;}
+    .back-bar{padding:16px 24px;}
+    footer{padding:24px;}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">Shivam Asthana</a>
+  <ul class="nav-links">
+    <li><a href="index.html#about">About</a></li>
+    <li><a href="index.html#work">All Sectors</a></li>
+    <li><a href="index.html#approach">Approach</a></li>
+  </ul>
+</nav>
+
+<div class="back-bar">
+  <a href="index.html" class="back-link">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M12 7H2M7 2L2 7l5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Back to all sectors
+  </a>
+</div>
+
+<div class="page-header">
+  <div class="breadcrumb">
+    <a href="index.html">Portfolio</a>
+    <span>›</span>
+    <span>Energy & Utilities</span>
+  </div>
+  <span class="page-tag">4 Cases Live</span>
+  <h1 class="page-title">Energy & <em>Utilities</em></h1>
+  <p class="page-sub">
+    Four case studies across grid performance, heat transition decision-making, customer retention, and renewable portfolio management. All built on verified public data from Bundesnetzagentur, ENTSO-E, Bruegel, WindEurope, and Ember.
+  </p>
+</div>
+
+<section class="cases-section">
+  <div class="cases-inner">
+    <div class="cases-grid">
+
+      <a href="energy_case1_grid_losses.html" class="case-card c1">
+        <div class="case-card-top">
+          <div class="case-num">Energy · Case 01 of 04</div>
+          <div class="case-title">Where Is the Grid <em>Leaking Money?</em></div>
+          <p class="case-desc">A German DSO has watched grid losses and unplanned outages rise for four consecutive years across three regional zones. This case disaggregates the trend, identifies the interaction between aging infrastructure and renewable penetration as the compounding driver, and quantifies the €8.3M annual cost of excess losses.</p>
+        </div>
+        <div class="case-card-bottom">
+          <div class="case-tags">
+            <span class="case-tag">Root Cause</span>
+            <span class="case-tag">SAIDI</span>
+            <span class="case-tag">Loss Analysis</span>
+          </div>
+          <span class="case-link">
+            Read case
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+        </div>
+      </a>
+
+      <a href="energy_case2_heat_transition.html" class="case-card c2">
+        <div class="case-card-top">
+          <div class="case-num">Energy · Case 02 of 04</div>
+          <div class="case-title">Heat or <em>Heat Pump?</em></div>
+          <p class="case-desc">Germany's GEG 2024 requires all new heating systems to run on 65% renewable energy. Property owners face a complex, subsidy-layered decision. This case builds a structured decision framework across four property profiles, with a full cost-benefit model accounting for BEG subsidies up to 70%.</p>
+        </div>
+        <div class="case-card-bottom">
+          <div class="case-tags">
+            <span class="case-tag">Decision Framework</span>
+            <span class="case-tag">BEG/KfW</span>
+            <span class="case-tag">Cost Model</span>
+          </div>
+          <span class="case-link">
+            Read case
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+        </div>
+      </a>
+
+      <a href="energy_case3_customer_churn.html" class="case-card c3">
+        <div class="case-card-top">
+          <div class="case-num">Energy · Case 03 of 04</div>
+          <div class="case-title">Who Is About to Leave — <em>and Why?</em></div>
+          <p class="case-desc">A German retail energy supplier has seen churn rise from 8% to 14% over two years while payment difficulties surge among a different customer group. This case segments 200,000 customers across churn risk and affordability vulnerability, and designs targeted interventions for each quadrant.</p>
+        </div>
+        <div class="case-card-bottom">
+          <div class="case-tags">
+            <span class="case-tag">Segmentation</span>
+            <span class="case-tag">Churn Analysis</span>
+            <span class="case-tag">Retention</span>
+          </div>
+          <span class="case-link">
+            Read case
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+        </div>
+      </a>
+
+      <a href="energy_case4_renewable_portfolio.html" class="case-card c4">
+        <div class="case-card-top">
+          <div class="case-num">Energy · Case 04 of 04</div>
+          <div class="case-title">12 Assets, <em>No Visibility</em></div>
+          <p class="case-desc">A European renewable developer managing 730 MW across Germany, Netherlands, and Denmark has no unified performance view. This case defines the KPI framework, builds the dashboard logic, and surfaces a €4.49M revenue gap — with the critical insight that two underperforming assets have completely different root causes.</p>
+        </div>
+        <div class="case-card-bottom">
+          <div class="case-tags">
+            <span class="case-tag">KPI Framework</span>
+            <span class="case-tag">Dashboard</span>
+            <span class="case-tag">Portfolio Mgmt</span>
+          </div>
+          <span class="case-link">
+            Read case
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-left">Shivam Asthana — Business Analysis Portfolio</div>
+  <div class="footer-right">Energy & Utilities · 4 of 20 cases</div>
+</footer>
+
+</body>
+</html>
