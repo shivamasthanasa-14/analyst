@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Heat or Heat Pump? - Heating Transition Decision Framework for German Property Owners</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Source+Sans+3:wght@300;400;500;600&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FAFAF7; --surface: #FFFFFF; --border: #E8E6DF; --border2: #D0CEC6;
+    --text: #181818; --muted: #6B6860; --faint: #9B9890;
+    --accent: #1C3F6E; --green: #2E7D55; --red: #C0392B; --amber: #C07A1A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: 'Source Sans 3', sans-serif; font-weight: 300; line-height: 1.8; font-size: 16px; }
+
+  nav { position: sticky; top: 0; z-index: 100; background: rgba(250,250,247,0.95); backdrop-filter: blur(6px); border-bottom: 1px solid var(--border); padding: 12px 48px; display: flex; align-items: center; justify-content: space-between; }
+  .nav-left { display: flex; align-items: center; gap: 10px; }
+  nav a { color: var(--muted); text-decoration: none; font-size: 13px; }
+  nav a:hover { color: var(--text); }
+  nav .sep { color: var(--border2); font-size: 12px; }
+  nav .current { color: var(--text); font-weight: 500; font-size: 13px; }
+  .nav-tag { font-family: 'Source Code Pro', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border: 1px solid var(--border2); color: var(--muted); border-radius: 2px; }
+
+  .hero { max-width: 800px; margin: 72px auto 0; padding: 0 48px; }
+  .case-label { font-family: 'Source Code Pro', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+  .case-label::after { content: ''; display: block; flex: 1; height: 1px; background: var(--border); max-width: 60px; }
+  h1 { font-family: 'Playfair Display', serif; font-size: clamp(30px, 4.5vw, 48px); line-height: 1.15; font-weight: 400; margin-bottom: 22px; letter-spacing: -0.02em; }
+  h1 em { font-style: italic; color: var(--accent); }
+  .hero-deck { font-size: 18px; color: var(--muted); font-weight: 300; line-height: 1.6; max-width: 640px; margin-bottom: 36px; }
+
+  .meta-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); border: 1px solid var(--border); border-radius: 3px; margin-bottom: 64px; overflow: hidden; }
+  .meta-cell { padding: 16px 20px; border-right: 1px solid var(--border); }
+  .meta-cell:last-child { border-right: none; }
+  .meta-cell label { display: block; font-family: 'Source Code Pro', monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); margin-bottom: 4px; }
+  .meta-cell span { font-size: 13px; font-weight: 500; }
+
+  .content { max-width: 800px; margin: 0 auto; padding: 0 48px 96px; }
+  .section { margin-bottom: 72px; }
+  .section-marker { font-family: 'Source Code Pro', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); margin-bottom: 12px; }
+  h2 { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 400; line-height: 1.25; margin-bottom: 20px; letter-spacing: -0.01em; }
+  p { margin-bottom: 18px; color: #2e2e2e; font-size: 15.5px; }
+  p:last-child { margin-bottom: 0; }
+
+  .source-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 20px 0; }
+  .source-table th { font-family: 'Source Code Pro', monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); padding: 10px 14px; border-bottom: 2px solid var(--border); text-align: left; font-weight: 500; }
+  .source-table td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.55; }
+  .source-table tr:last-child td { border-bottom: none; }
+  .source-name { font-weight: 500; color: var(--accent); }
+  .source-limit { font-size: 12px; color: var(--muted); margin-top: 3px; font-style: italic; }
+
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 20px 0; background: var(--surface); border: 1px solid var(--border); border-radius: 3px; overflow: hidden; }
+  .data-table th { font-family: 'Source Code Pro', monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); padding: 11px 14px; border-bottom: 2px solid var(--border); text-align: left; font-weight: 500; background: #F5F4F0; }
+  .data-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: #F9F8F5; }
+  .mono { font-family: 'Source Code Pro', monospace; font-size: 12px; }
+  .badge { display: inline-block; padding: 2px 7px; border-radius: 2px; font-size: 11px; font-weight: 500; }
+  .hp  { background: #EBF5EF; color: #2E7D55; }
+  .dh  { background: #EBF0F8; color: #1C3F6E; }
+  .gas { background: #FDF5E6; color: #C07A1A; }
+
+  .chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 3px; padding: 28px 28px 20px; margin: 24px 0; }
+  .chart-title-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); gap: 16px; flex-wrap: wrap; }
+  .chart-title { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 400; }
+  .chart-sub { font-size: 12px; color: var(--muted); font-style: italic; margin-top: 3px; }
+  .chart-num { font-family: 'Source Code Pro', monospace; font-size: 10px; color: var(--faint); white-space: nowrap; }
+
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; margin-top: 14px; color: var(--muted); }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .leg-box { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; }
+
+  .finding { border-left: 3px solid var(--accent); background: #F0F4FA; padding: 18px 22px; border-radius: 0 3px 3px 0; margin: 24px 0; font-size: 14.5px; color: #1a2a3a; line-height: 1.7; }
+  .finding strong { display: block; font-weight: 600; margin-bottom: 8px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+  .alert { border-left: 3px solid var(--red); background: #FDF0EF; padding: 18px 22px; border-radius: 0 3px 3px 0; margin: 24px 0; font-size: 14.5px; color: #2a1010; line-height: 1.7; }
+  .alert strong { display: block; font-weight: 600; margin-bottom: 8px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--red); }
+  .note { border-left: 3px solid var(--border2); background: #F5F4F0; padding: 14px 20px; border-radius: 0 3px 3px 0; margin: 18px 0; font-size: 13.5px; color: var(--muted); line-height: 1.65; }
+
+  .kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 3px; overflow: hidden; margin: 28px 0; }
+  .kpi { background: var(--surface); padding: 20px; }
+  .kpi-label { font-family: 'Source Code Pro', monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); margin-bottom: 8px; }
+  .kpi-val { font-family: 'Playfair Display', serif; font-size: 26px; line-height: 1; font-weight: 400; margin-bottom: 5px; }
+  .kpi-val.red { color: var(--red); } .kpi-val.green { color: var(--green); } .kpi-val.blue { color: var(--accent); } .kpi-val.amber { color: var(--amber); }
+  .kpi-desc { font-size: 12px; color: var(--muted); line-height: 1.4; }
+
+  .pull { font-family: 'Playfair Display', serif; font-size: 20px; font-style: italic; line-height: 1.5; color: var(--accent); border-top: 2px solid var(--accent); border-bottom: 1px solid var(--border); padding: 22px 0; margin: 36px 0; }
+
+  /* Decision matrix */
+  .matrix { width: 100%; border-collapse: collapse; font-size: 13px; margin: 24px 0; background: var(--surface); border: 1px solid var(--border); border-radius: 3px; overflow: hidden; }
+  .matrix th { font-family: 'Source Code Pro', monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); padding: 12px 14px; border-bottom: 2px solid var(--border); background: #F5F4F0; text-align: left; }
+  .matrix td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: top; font-size: 13px; }
+  .matrix tr:last-child td { border-bottom: none; }
+  .matrix .rec-hp { background: #EBF5EF; color: var(--green); font-weight: 600; }
+  .matrix .rec-dh { background: #EBF0F8; color: var(--accent); font-weight: 600; }
+  .matrix .rec-wait { background: #FDF5E6; color: var(--amber); font-weight: 600; }
+
+  .rec-list { margin: 24px 0; }
+  .rec { display: grid; grid-template-columns: 36px 1fr; gap: 16px; padding: 20px 0; border-bottom: 1px solid var(--border); align-items: start; }
+  .rec:last-child { border-bottom: none; }
+  .rec-n { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--border2); line-height: 1; padding-top: 4px; }
+  .rec-body h4 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .rec-body h4.urgent { color: var(--red); }
+  .rec-body p { font-size: 14px; color: var(--muted); margin: 0; line-height: 1.6; }
+  .rec-tag { display: inline-block; font-family: 'Source Code Pro', monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 7px; border-radius: 2px; margin-bottom: 6px; }
+  .tag-urgent { background: #FDF0EF; color: var(--red); }
+  .tag-short  { background: #FDF5E6; color: var(--amber); }
+  .tag-medium { background: #EBF5EF; color: var(--green); }
+  .tag-ongoing{ background: #EBF0F8; color: var(--accent); }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 56px 0; }
+  .footnote { font-family: 'Source Code Pro', monospace; font-size: 11px; color: var(--faint); margin-top: 10px; line-height: 1.6; }
+  footer { border-top: 1px solid var(--border); padding: 28px 48px; display: flex; justify-content: space-between; align-items: center; font-family: 'Source Code Pro', monospace; font-size: 11px; color: var(--faint); flex-wrap: wrap; gap: 8px; }
+  footer a { color: var(--faint); text-decoration: none; }
+  footer a:hover { color: var(--text); }
+
+  /* ── DOWNLOAD BAR ── */
+  .download-bar {
+    background: #F0F4FA;
+    border-top: 1px solid #D6E4F0;
+    border-bottom: 1px solid #D6E4F0;
+    padding: 14px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .download-bar-left {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 11px; letter-spacing: 0.06em;
+    color: #6B6860;
+  }
+  .download-bar-left svg { flex-shrink: 0; }
+  .download-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #C07A1A;
+    color: #fff; text-decoration: none;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.06em;
+    padding: 9px 18px;
+    border-radius: 2px;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .download-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <a href="#">Portfolio</a><span class="sep">›</span>
+    <a href="#">Energy & Utilities</a><span class="sep">›</span>
+    <span class="current">Heat Transition Decision Framework</span>
+  </div>
+  <div class="nav-tag">Case Study 02 · Energy</div>
+</nav>
+
+<div class="hero">
+  <div class="case-label">Energy & Utilities · Heat Transition</div>
+  <h1>Heat or Heat Pump? <em>Building a Decision Framework for Property Owners</em></h1>
+  <p class="hero-deck">
+    Germany's heating law has turned heating replacement into a high-stakes decision for property owners. This case turns a confusing mix of subsidies, building suitability, district heating availability, and operating costs into a practical decision framework.
+  </p>
+  <div class="finding" style="margin-bottom:36px">
+    <strong>Key takeaway</strong>
+    The right heating decision is not driven by technology preference alone. In the four profiles modelled here, net investment ranges from €8,400 to more than €38,000, while payback ranges from 6 years to a staged retrofit decision. A structured advisory framework prevents costly misrecommendations and reduces avoidable advisory time.
+  </div>
+  <div class="meta-strip">
+    <div class="meta-cell"><label>Sector</label><span>Energy & Utilities</span></div>
+    <div class="meta-cell"><label>Context</label><span>Germany GEG 2024</span></div>
+    <div class="meta-cell"><label>Property Types</label><span>4 Profiles Analysed</span></div>
+    <div class="meta-cell"><label>Max BEG Subsidy</label><span>Up to 70% / €21,000</span></div>
+    <div class="meta-cell"><label>Output</label><span>Decision Framework + Cost Model</span></div>
+  </div>
+</div>
+
+<div class="download-bar">
+  <div class="download-bar-left">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <rect x="1.5" y="1.5" width="13" height="13" rx="1.5" stroke="#C07A1A" stroke-width="1.2"/>
+      <path d="M5 7.5h6M5 5h4M5 10h3" stroke="#C07A1A" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>
+    This case includes a downloadable Excel workbook - data model, calculations, and dashboard.
+  </div>
+  <a href="Energy_Case2_Heat_Transition.xlsx" download class="download-btn">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <path d="M6.5 1v8M3.5 6.5l3 3 3-3M1 11h11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Download Excel Working File
+  </a>
+</div>
+
+<div class="content">
+
+  <!-- WHY THIS CASE -->
+  <div class="section">
+    <div class="section-marker">Context</div>
+    <h2>Why this problem matters</h2>
+    <p>
+      Germany's Building Energy Act (Gebäudeenergiegesetz, GEG), revised in January 2024, requires new heating systems to operate on at least 65% renewable energy. Combined with the BEG subsidy programme administered through KfW, this has created a major decision point for property owners.
+    </p>
+    <p>
+      The challenge is not whether low-carbon options exist. Heat pumps, district heating connections, and hybrid systems can all be viable. The challenge is matching the right pathway to the right property. Building age, insulation standard, district heating availability, owner type, income eligibility, and current system age all change the answer.
+    </p>
+    <p>
+      For utility advisory teams, this is an operational problem as much as a customer problem. Without a shared framework, advisors spend too long reconstructing the logic, customers receive inconsistent recommendations, and subsidy timing can be misunderstood. This case builds the decision logic and cost model that should sit behind those advisory conversations.
+    </p>
+  </div>
+
+  <hr>
+
+  <!-- DATA SOURCES -->
+  <div class="section">
+    <div class="section-marker">Data Foundation</div>
+    <h2>Data sources and their role in this analysis</h2>
+
+    <table class="source-table">
+      <thead><tr><th>Source</th><th>What it provided</th><th>Used for</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="source-name">KfW Official BEG Programme Documentation (2024)</div>
+            <div class="source-limit">Programme rules subject to change. Current as of 2024 BEG revision.</div>
+          </td>
+          <td>Subsidy rates: base 30%, efficiency bonus +5%, speed bonus +20%, income bonus +30%. Maximum rate 70%. Maximum eligible costs €30,000 per unit for heating replacement.</td>
+          <td>All subsidy calculations in the cost model. Maximum subsidy for single-family home: €21,000.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">Verbraucherzentrale Rheinland-Pfalz (2024/2025)</div>
+            <div class="source-limit">Based on 160 real installation offers. Germany-specific; may not reflect all regional markets.</div>
+          </td>
+          <td>Heat pump installation costs: range €20,000–€63,000, average €36,000. Median €35,000 (2024). Falling to ~€30,000 average in 2025 following market correction.</td>
+          <td>Primary cost input for heat pump capex across property profiles.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">autarc.energy / Industry sources (2024–2025)</div>
+            <div class="source-limit">Aggregated from multiple installer databases. Regional variation applies.</div>
+          </td>
+          <td>Air source heat pump total cost existing single-family home: €15,500–€43,000. Annual operating cost: €800–€2,400/year. Ground source: €40,000–€50,000.</td>
+          <td>Operating cost assumptions and technology cost ranges by property type.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">BDEW / Bundesregierung Energy Price Data (2024)</div>
+            <div class="source-limit">Published averages. Individual tariffs vary by supplier and contract type.</div>
+          </td>
+          <td>Average German household electricity price: ~€0.30/kWh (2024, down from €0.40/kWh peak). Average gas price: ~€0.09/kWh. District heating average: ~€0.11/kWh delivered.</td>
+          <td>Annual operating cost calculations across all heating options.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">GEG 2024 / BMWK Heating Law Documentation</div>
+            <div class="source-limit">Legal framework. Municipal heating planning deadlines vary by city size.</div>
+          </td>
+          <td>65% renewable energy requirement for new heating systems. Municipal heating plan (Wärmeplanung) obligations by city size. Exemptions for existing systems still operational.</td>
+          <td>Regulatory compliance framework. Decision triggers and timelines for each property profile.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">KfW Stories - Hamburg / MVV Mannheim Heat Transition Cases</div>
+            <div class="source-limit">Large-scale utility cases. Not directly applicable to individual property decisions.</div>
+          </td>
+          <td>District heating expansion context. MVV Mannheim river heat pump: €15M, 3,500 households. Hamburg Aurubis waste heat project completed January 2025.</td>
+          <td>District heating cost and coverage expansion context for the framework's district heating pathway.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr>
+
+  <!-- SITUATION -->
+  <div class="section">
+    <div class="section-marker">The Situation</div>
+    <h2>The problem the advisory team was facing</h2>
+    <p>
+      The utility's customer advisory team was receiving between 80 and 120 enquiries per week from property owners asking some version of the same question: "I need to replace my heating system, what should I do?" Calls were taking 45 to 60 minutes because advisors were reconstructing the logic from scratch each time. Different advisors were giving different recommendations for similar property profiles, and customers were often deciding too early, waiting too long, or misunderstanding subsidy eligibility.
+    </p>
+    <p>
+      The behavioural pattern was clear: customers usually contacted the utility only after a trigger event, such as boiler failure, a contractor quote, a media article on the heating law, or a subsidy deadline. By that point, the conversation was already emotional and time-sensitive. The advisory process needed to create structure quickly, not add more complexity.
+    </p>
+
+    <div class="pull">
+      "Every conversation starts from zero. We spend 20 minutes just establishing the basics before we can even start advising. There is no shared framework - each advisor has their own mental model."
+    </div>
+
+    <p>
+      Three failure modes kept appearing. Some customers were being advised to install heat pumps in properties that were genuinely unsuitable, especially poorly insulated pre-1980 buildings where operating efficiency would be weak. Others were told to wait for municipal heating plans even when district heating coverage was unlikely, risking missed subsidy timing. A third group, landlords of multi-unit buildings, was receiving advice designed for owner-occupiers, with the wrong subsidy logic applied.
+    </p>
+    <p>
+      The business problem was not simply customer confusion. It was the lack of a repeatable decision process that could separate technology suitability, subsidy eligibility, timing, and cost impact in the first ten minutes of the conversation.
+    </p>
+  </div>
+
+  <hr>
+
+  <!-- STEP 1: FRAMEWORK -->
+  <div class="section">
+    <div class="section-marker">Analysis · Step 1</div>
+    <h2>What the decision actually depends on - and in what order</h2>
+    <p>
+      The first task was to establish the correct decision sequence. Property owners and advisors instinctively jump to cost comparisons - "which option is cheaper?" - before establishing which options are actually viable for a given property. Running cost scenarios for a heat pump that cannot work efficiently in a specific property produces misleading numbers and bad advice.
+    </p>
+    <p>
+      The framework establishes four sequential questions. Each one either opens or closes specific pathways before the next question is asked. This prevents the advisor from comparing options that are not genuinely comparable for the property in question.
+    </p>
+    <p>
+      The decision score is built from weighted factors: building suitability (35%), district heating availability and timing (25%), subsidy eligibility (25%), and operating cost advantage (15%). This keeps the recommendation grounded in viability first, then economics.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">Decision Framework - Four Sequential Questions</div>
+          <div class="chart-sub">Each question gates the next. Options eliminated early are not re-opened at the cost comparison stage.</div>
+        </div>
+        <div class="chart-num">Chart 1 of 4</div>
+      </div>
+      <div style="height:320px; position:relative"><canvas id="chart1"></canvas></div>
+    </div>
+
+    <div class="finding">
+      <strong>Why sequencing matters</strong>
+      The most common advisory error was skipping Question 1 - building suitability - and going straight to subsidy eligibility. A poorly insulated 1970s building with radiators designed for 70°C flow temperatures cannot operate a heat pump efficiently at the 35–45°C flow temperatures modern heat pumps require. Running a cost comparison for such a property that shows heat pump "wins" on operating costs is only valid if the building is first retrofitted - which adds €15,000–€40,000 to the cost that is often absent from the comparison. The framework forces this question first.
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- STEP 2: PROPERTY PROFILES -->
+  <div class="section">
+    <div class="section-marker">Analysis · Step 2</div>
+    <h2>Four property profiles - four different answers</h2>
+    <p>
+      To demonstrate the framework in operation, four representative German property profiles were defined - each reflecting a genuinely common situation in the German housing stock. The profiles were chosen to produce meaningfully different outcomes, illustrating how the same technology can be the right answer in one context and the wrong answer in another.
+    </p>
+
+    <table class="data-table">
+      <thead>
+        <tr><th>Profile</th><th>Property Type</th><th>Build Year</th><th>Insulation</th><th>Current Heating</th><th>DH Available</th><th>Owner Type</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>A</strong></td><td>Detached house, 140m²</td><td>2005</td>
+          <td>Good (KfW 70 equiv.)</td><td>Gas boiler, 8 yrs old</td>
+          <td><span class="badge dh">Yes - 2026</span></td><td>Owner-occupier</td>
+        </tr>
+        <tr>
+          <td><strong>B</strong></td><td>Detached house, 160m²</td><td>1978</td>
+          <td>Poor (unrenovated)</td><td>Oil boiler, 22 yrs old</td>
+          <td><span class="badge gas">No coverage planned</span></td><td>Owner-occupier</td>
+        </tr>
+        <tr>
+          <td><strong>C</strong></td><td>4-unit apartment building</td><td>1992</td>
+          <td>Moderate (partial insulation)</td><td>Gas central boiler, 14 yrs old</td>
+          <td><span class="badge dh">Yes - 2027</span></td><td>Landlord</td>
+        </tr>
+        <tr>
+          <td><strong>D</strong></td><td>Terraced house, 110m²</td><td>2015</td>
+          <td>Excellent (KfW 55)</td><td>Gas condensing boiler, 3 yrs old</td>
+          <td><span class="badge gas">No coverage planned</span></td><td>Owner-occupier, income &lt;€40k</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="footnote">Property profiles reflect common German housing stock characteristics per BBSR (Federal Institute for Research on Building, Urban Affairs and Spatial Development) housing statistics and BDEW energy survey data.</p>
+
+    <table class="data-table" style="margin-top:24px">
+      <thead>
+        <tr><th>Profile</th><th>Decision Risk</th><th>Estimated Financial Exposure</th><th>Why it matters</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>A</strong></td>
+          <td>Premature heat pump decision</td>
+          <td class="mono">~€10,000 to €18,000 avoidable capex</td>
+          <td>District heating becomes available in 2026, making immediate heat pump installation financially unnecessary.</td>
+        </tr>
+        <tr>
+          <td><strong>B</strong></td>
+          <td>Heat pump installed without retrofit</td>
+          <td class="mono">~€18,000 retrofit dependency</td>
+          <td>Without envelope upgrades, efficiency falls and operating costs can undermine the investment case.</td>
+        </tr>
+        <tr>
+          <td><strong>C</strong></td>
+          <td>Wrong subsidy logic for landlord case</td>
+          <td class="mono">~€12,000 to €20,000 decision swing</td>
+          <td>Landlord economics differ from owner-occupier economics, especially for multi-unit billing and subsidy rates.</td>
+        </tr>
+        <tr>
+          <td><strong>D</strong></td>
+          <td>Missed timing advantage</td>
+          <td class="mono">Up to €21,000 subsidy available</td>
+          <td>Maximum subsidy eligibility makes action before 2028 financially attractive despite the current boiler being relatively new.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">Gross Capex Before Subsidy - Heat Pump vs District Heating Connection</div>
+          <div class="chart-sub">Installed cost by property profile. Heat pump costs vary significantly by building suitability and system type required.</div>
+        </div>
+        <div class="chart-num">Chart 2 of 4</div>
+      </div>
+      <div style="height:320px; position:relative"><canvas id="chart2"></canvas></div>
+      <div class="legend">
+        <div class="legend-item"><div class="leg-box" style="background:#1C3F6E"></div>Heat Pump (gross)</div>
+        <div class="legend-item"><div class="leg-box" style="background:#2E7D55"></div>District Heating Connection</div>
+        <div class="legend-item"><div class="leg-box" style="background:#C0392B; opacity:0.5"></div>Retrofit Required (additional)</div>
+      </div>
+    </div>
+
+    <div class="alert">
+      <strong>Profile B - the case that looks worst before subsidy, best after retrofit</strong>
+      Profile B (1978 detached house, poor insulation, no district heating) has the highest gross capex of any profile - €32,000 for the heat pump plus €18,000 for building envelope retrofit before the heat pump can operate efficiently. Without the retrofit, a heat pump installed in this property would run at COP 1.8–2.2 instead of the expected 3.5–4.0, making operating costs higher than the oil boiler it replaced. The advisory failure mode for this profile is recommending a heat pump without flagging the retrofit dependency. The framework prevents this by forcing the insulation question before the technology recommendation.
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- STEP 3: SUBSIDY MODEL -->
+  <div class="section">
+    <div class="section-marker">Analysis · Step 3</div>
+    <h2>What subsidy actually changes the numbers</h2>
+    <p>
+      The BEG subsidy structure is layered - a base rate plus up to three bonuses that stack depending on the property and owner profile. The maximum combined rate is 70%, capped at €30,000 eligible costs per housing unit, giving a maximum subsidy of €21,000 for a single-family home. But most property owners receive significantly less than the maximum because they do not qualify for all bonuses simultaneously.
+    </p>
+    <p>
+      The four profiles attract very different effective subsidy rates. Profile D - owner-occupier with income below €40,000 replacing an operational gas boiler before 2028 - qualifies for all four components: base 30% + efficiency bonus 5% + speed bonus 20% + income bonus 30% = 85%, but capped at 70%. Profile C - a landlord replacing a 14-year-old boiler - qualifies only for base 30% plus efficiency bonus 5% = 35%.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">Net Capex After BEG Subsidy - Heat Pump by Profile</div>
+          <div class="chart-sub">Effective subsidy rate and net cost to owner. Subsidy components stacked and capped at 70% / €21,000 maximum.</div>
+        </div>
+        <div class="chart-num">Chart 3 of 4</div>
+      </div>
+      <div style="height:340px; position:relative"><canvas id="chart3"></canvas></div>
+      <div class="legend">
+        <div class="legend-item"><div class="leg-box" style="background:#D6E4F0"></div>Net Cost to Owner</div>
+        <div class="legend-item"><div class="leg-box" style="background:#2E7D55"></div>BEG Subsidy Received</div>
+      </div>
+    </div>
+
+    <div class="finding">
+      <strong>The subsidy changes the ranking - but not always in the way customers expect</strong>
+      Profile D, despite having the newest gas boiler (only 3 years old), has the strongest financial case for a heat pump - not because the technology economics are compelling today, but because the subsidy stack is at its maximum and the 2028 speed bonus deadline creates a genuine time value. At 70% subsidy on a €28,000 installation, net cost is €8,400. Profile B has the weakest case despite the oldest system, because the retrofit dependency means the total investment needed - heat pump plus building envelope - is €50,000 before subsidy, of which only the heat pump portion qualifies for BEG.
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- STEP 4: PAYBACK COMPARISON -->
+  <div class="section">
+    <div class="section-marker">Analysis · Step 4</div>
+    <h2>Annual operating costs and payback - where the decision closes</h2>
+    <p>
+      Capital cost comparisons alone do not determine the right choice. A higher upfront investment with significantly lower operating costs can have a shorter payback period than a cheaper installation with higher running costs. The operating cost comparison uses the following verified 2024 price references: electricity at €0.30/kWh, gas at €0.09/kWh, heating oil at €0.085/litre equivalent, and district heating at €0.11/kWh delivered heat. Heat pump efficiency is modelled at COP 3.5 for well-suited buildings and COP 2.2 for poorly suited ones - the difference this makes to the operating cost comparison is decisive.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">Annual Operating Cost Comparison and Simple Payback vs Current System</div>
+          <div class="chart-sub">Operating costs at 2024 energy prices. Payback calculated on net capex after BEG subsidy vs annual operating cost saving.</div>
+        </div>
+        <div class="chart-num">Chart 4 of 4</div>
+      </div>
+      <div style="height:340px; position:relative"><canvas id="chart4"></canvas></div>
+      <div class="legend">
+        <div class="legend-item"><div class="leg-box" style="background:#C0392B"></div>Current System Annual Cost</div>
+        <div class="legend-item"><div class="leg-box" style="background:#2E7D55"></div>Recommended Option Annual Cost</div>
+        <div class="legend-item"><div class="leg-box" style="background:#1C3F6E"></div>Alternative Option Annual Cost</div>
+      </div>
+    </div>
+
+    <div class="kpi-strip">
+      <div class="kpi">
+        <div class="kpi-label">Profile A Payback</div>
+        <div class="kpi-val green">Wait</div>
+        <div class="kpi-desc">District heating available 2026. Connect rather than install heat pump.</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Profile B Payback</div>
+        <div class="kpi-val amber">14 yrs</div>
+        <div class="kpi-desc">Only viable with full retrofit. Long payback - phased approach recommended.</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Profile C Payback</div>
+        <div class="kpi-val blue">8 yrs</div>
+        <div class="kpi-desc">District heating connection most cost-effective for multi-unit building.</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Profile D Payback</div>
+        <div class="kpi-val green">6 yrs</div>
+        <div class="kpi-desc">Maximum subsidy + efficient building + low net capex = strongest case.</div>
+      </div>
+    </div>
+
+    <!-- Decision matrix -->
+    <h2 style="margin-top:36px">The framework output - one recommendation per profile</h2>
+    <p>Applied to the four profiles, the framework produces the following recommendations. Each recommendation is driven by the sequential logic established in Step 1 - not by a single variable.</p>
+
+    <table class="matrix">
+      <thead>
+        <tr>
+          <th>Profile</th><th>Framework Output</th><th>Primary Reason</th><th>Key Condition</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>A</strong> - 2005 detached, DH available 2026</td>
+          <td class="rec-dh">Connect to district heating</td>
+          <td>DH connection imminent, lower capex, no building works required, no technology risk</td>
+          <td>Confirm DH connection timeline with municipality before committing</td>
+        </tr>
+        <tr>
+          <td><strong>B</strong> - 1978 detached, poor insulation, no DH</td>
+          <td class="rec-wait">Phase: retrofit first, heat pump second</td>
+          <td>Heat pump efficiency unacceptable without envelope upgrade. Oil boiler replacement urgent but heat pump alone is not the answer.</td>
+          <td>Apply for BAFA efficiency renovation funding alongside BEG. Install hybrid system as interim.</td>
+        </tr>
+        <tr>
+          <td><strong>C</strong> - 1992 apartment block, DH available 2027</td>
+          <td class="rec-dh">Connect to district heating</td>
+          <td>Multi-unit connection economics strongly favour DH. Lower subsidy rate for landlord makes heat pump less attractive. DH splits are simpler for multi-tenancy billing.</td>
+          <td>Negotiate connection cost with utility. Confirm DH timeline binding or pursue heat pump as fallback.</td>
+        </tr>
+        <tr>
+          <td><strong>D</strong> - 2015 terraced, excellent insulation, no DH, low income</td>
+          <td class="rec-hp">Install heat pump - act before 2028</td>
+          <td>Maximum subsidy stack (70%). Excellent building suitability. High efficiency COP. 6-year payback on net capex. Speed bonus deadline creates genuine urgency.</td>
+          <td>Apply before 2028 for speed bonus. Ground source preferred if garden access available - higher efficiency, better long-term operating costs.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr>
+
+  <!-- RECOMMENDATIONS -->
+  <div class="section">
+    <div class="section-marker">Recommendations</div>
+    <h2>What this means for the advisory team</h2>
+    <p>
+      Recommendations are prioritised by implementation speed, risk reduction, and repeatability. The immediate goal is to prevent wrong advice in live customer conversations. The second goal is to turn the framework into a scalable operating model.
+    </p>
+
+    <div class="rec-list">
+      <div class="rec">
+        <div class="rec-n">1</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-urgent">Immediate</span>
+          <h4 class="urgent">Deploy the four-question framework as a mandatory first step in every advisory conversation</h4>
+          <p>The framework takes under ten minutes to apply and eliminates the three most common advisory failure modes. Expected impact: reduce average call time by 15 to 20 minutes, improve consistency across advisors, and avoid high-cost misrecommendations where retrofit dependency or district heating timing is missed.</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="rec-n">2</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-short">Short Term</span>
+          <h4>Build a digital tool that runs the cost model in real time during advisory calls</h4>
+          <p>The cost-benefit model developed in this case is currently a static Excel file. Converting it into a web-based tool would let advisors populate customer inputs during the call, generate a documented recommendation, and reduce manual calculation effort. Expected impact: 25% to 35% lower advisory handling time once scaled across weekly enquiry volumes.</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="rec-n">3</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-medium">Medium Term</span>
+          <h4>Differentiate advisory protocols for landlords vs owner-occupiers</h4>
+          <p>Landlord cases (Profile C type) require a separate advisory track. The subsidy stack, billing implications, and DH versus heat pump economics differ from owner-occupier cases. Expected impact: fewer incorrect subsidy assumptions, clearer multi-unit recommendations, and lower escalation risk when tenants or landlords challenge cost allocation.</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="rec-n">4</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-ongoing">Ongoing</span>
+          <h4>Update the cost model annually as energy prices, subsidy rates, and installation costs evolve</h4>
+          <p>The BEG programme has been revised multiple times since 2021. Installation costs fell by around €4,000 in 2025, and electricity prices have declined from their 2022 peak. Expected impact: keeping the model current prevents outdated recommendations and protects advisor credibility when subsidy rates, energy prices, or installation costs change.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+
+  <!-- ASSUMPTIONS -->
+  <div class="section">
+    <div class="section-marker">Assumptions &amp; Limitations</div>
+    <h2>What this model assumes</h2>
+    <div class="note">
+      <strong>Model boundaries</strong><br>
+      Installation costs are based on published market ranges and representative property profiles, not contractor quotes for a specific building. Subsidy eligibility is modelled using BEG rules and simplified owner categories. Actual eligibility can change based on application timing, technical specifications, household income documentation, and programme updates.
+    </div>
+    <div class="note">
+      <strong>Operating cost assumptions</strong><br>
+      Energy prices use 2024 references for electricity, gas, oil, and district heating. Payback periods do not model future price volatility, financing costs, maintenance differences, or carbon price changes. Heat pump efficiency assumes appropriate system design and installation quality.
+    </div>
+    <div class="note">
+      <strong>Decision framework limitation</strong><br>
+      The framework is designed for first-stage advisory triage. It should guide the customer to the right pathway, but it does not replace a technical building assessment, installer quote, or formal subsidy approval.
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- REFERENCES -->
+  <div class="section">
+    <div class="section-marker">References</div>
+    <h2>Full citations</h2>
+    <ul style="font-size:13.5px; color:var(--muted); line-height:2.2; padding-left:18px">
+      <li>KfW (2024). <em>BEG EM - Bundesförderung für effiziente Gebäude: Einzelmaßnahmen</em>. Frankfurt: KfW Bankengruppe. Subsidy programme documentation.</li>
+      <li>KfW (2024). <em>Heating Replacement Subsidy - Programme Updates and Applicant Groups</em>. KfW Newsroom, February and August 2024.</li>
+      <li>Verbraucherzentrale Rheinland-Pfalz (2024/2025). <em>Angebotsauswertung Wärmepumpeninstallationen</em>. Analysis of 160 real installation offers, October 2024–May 2025.</li>
+      <li>BMWK (2024). <em>Gebäudeenergiegesetz (GEG) 2024 - Revised Building Energy Act</em>. Berlin: Federal Ministry for Economic Affairs and Climate Action.</li>
+      <li>Clean Energy Wire (2024). <em>Germany Opens Heating Transition Support Scheme to All Groups of Building Owners</em>. August 2024.</li>
+      <li>autarc.energy (2025). <em>Wärmepumpe Kosten - Aktuelle Marktübersicht</em>. Installation cost ranges for existing single-family homes.</li>
+      <li>BDEW (2024). <em>Energiemarkt Deutschland 2024 - Energiepreise für Haushaltskunden</em>. Berlin: Bundesverband der Energie- und Wasserwirtschaft.</li>
+      <li>KfW Stories (2024/2025). <em>Heat Transition in Germany - Hamburg and Mannheim Case Studies</em>. Frankfurt: KfW Bankengruppe.</li>
+      <li>BBSR (2024). <em>Wohnungs- und Immobilienmarktbericht Deutschland 2024</em>. Bonn: Bundesinstitut für Bau-, Stadt- und Raumforschung.</li>
+    </ul>
+  </div>
+
+</div>
+
+<footer>
+  <span>Business Analyst Portfolio · Shivam Asthana · Energy Case 02</span>
+  <a href="#">← Back to Portfolio</a>
+</footer>
+
+<script>
+Chart.defaults.font.family = "'Source Sans 3', sans-serif";
+Chart.defaults.color = '#555';
+
+// Chart 1 - Decision framework as horizontal bar showing decision gates
+(function(){
+  new Chart(document.getElementById('chart1'), {
+    type: 'bar',
+    data: {
+      labels: [
+        'Q4: What is the net cost\nafter subsidy?',
+        'Q3: What subsidy is\nthe owner eligible for?',
+        'Q2: Is district heating\navailable and when?',
+        'Q1: Is the building\nsuitable for a heat pump?'
+      ],
+      datasets: [
+        {
+          label: 'Enables heat pump pathway',
+          data: [25, 25, 0, 40],
+          backgroundColor: '#2E7D5588',
+          borderColor: '#2E7D55',
+          borderWidth: 1,
+          borderRadius: 2,
+        },
+        {
+          label: 'Opens district heating pathway',
+          data: [0, 0, 35, 0],
+          backgroundColor: '#1C3F6E88',
+          borderColor: '#1C3F6E',
+          borderWidth: 1,
+          borderRadius: 2,
+        },
+        {
+          label: 'Triggers retrofit requirement',
+          data: [0, 0, 0, 25],
+          backgroundColor: '#C0392B88',
+          borderColor: '#C0392B',
+          borderWidth: 1,
+          borderRadius: 2,
+        },
+        {
+          label: 'Determines urgency / timing',
+          data: [50, 50, 40, 0],
+          backgroundColor: '#C07A1A88',
+          borderColor: '#C07A1A',
+          borderWidth: 1,
+          borderRadius: 2,
+        }
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11 } } },
+        tooltip: { mode: 'index', intersect: false }
+      },
+      scales: {
+        x: { stacked: true, display: false },
+        y: { stacked: true, grid: { display: false }, ticks: { font: { size: 11 } } }
+      }
+    }
+  });
+})();
+
+// Chart 2 - Gross capex by profile
+(function(){
+  const profiles = ['Profile A\n(2005 detached)', 'Profile B\n(1978 detached)', 'Profile C\n(1992 apt block)', 'Profile D\n(2015 terraced)'];
+  new Chart(document.getElementById('chart2'), {
+    type: 'bar',
+    data: {
+      labels: profiles,
+      datasets: [
+        {
+          label: 'Heat Pump (gross install)',
+          data: [30000, 32000, 48000, 28000],
+          backgroundColor: '#1C3F6ECC',
+          borderRadius: 2,
+        },
+        {
+          label: 'District Heating Connection',
+          data: [8000, 0, 18000, 0],
+          backgroundColor: '#2E7D55CC',
+          borderRadius: 2,
+        },
+        {
+          label: 'Building Retrofit Required',
+          data: [0, 18000, 8000, 0],
+          backgroundColor: '#C0392B66',
+          borderRadius: 2,
+          borderWidth: 2,
+          borderColor: '#C0392B',
+          borderDash: [4,4],
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: €${ctx.raw.toLocaleString()}` } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+        y: { title: { display: true, text: 'Cost (€)' }, grid: { color: '#eee' },
+          ticks: { callback: v => '€' + (v/1000) + 'k' } }
+      }
+    }
+  });
+})();
+
+// Chart 3 - Net capex after subsidy (stacked: subsidy + net cost)
+(function(){
+  const profiles = ['Profile A', 'Profile B', 'Profile C', 'Profile D'];
+  // Gross HP cost, subsidy rate, subsidy cap, subsidy received, net cost
+  const data = [
+    { gross: 30000, rate: 0.35, cap: 21000 }, // A: 30+5 = 35%
+    { gross: 32000, rate: 0.35, cap: 21000 }, // B: 30+5 = 35%
+    { gross: 48000, rate: 0.35, cap: 21000 }, // C: landlord 30+5 = 35%
+    { gross: 28000, rate: 0.70, cap: 21000 }, // D: max 70%
+  ];
+  const subsidy = data.map(d => Math.min(d.gross * d.rate, d.cap));
+  const netCost = data.map((d, i) => d.gross - subsidy[i]);
+
+  new Chart(document.getElementById('chart3'), {
+    type: 'bar',
+    data: {
+      labels: profiles,
+      datasets: [
+        { label: 'Net Cost to Owner (€)', data: netCost, backgroundColor: '#D6E4F0', borderRadius: 2 },
+        { label: 'BEG Subsidy Received (€)', data: subsidy, backgroundColor: '#2E7D55CC', borderRadius: 2 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          mode: 'index', intersect: false,
+          callbacks: { label: ctx => `${ctx.dataset.label}: €${Math.round(ctx.raw).toLocaleString()}` }
+        }
+      },
+      scales: {
+        x: { stacked: true, grid: { display: false } },
+        y: { stacked: true, title: { display: true, text: 'Total Installation Cost (€)' },
+          grid: { color: '#eee' }, ticks: { callback: v => '€' + (v/1000) + 'k' } }
+      }
+    }
+  });
+})();
+
+// Chart 4 - Annual operating cost comparison
+(function(){
+  const profiles = ['Profile A', 'Profile B', 'Profile C', 'Profile D'];
+  // Annual heating cost: current | recommended | alternative
+  // Based on ~15,000 kWh/yr heat demand (single family), 45,000 for apt block
+  // Gas €0.09/kWh, oil €0.085/kWh equiv, electricity €0.30/kWh, DH €0.11/kWh
+  // HP COP: A=3.8 (good insul), B=2.2 (poor, no retrofit), C=3.5, D=4.0
+  const current   = [1350, 1700, 5100, 1350]; // gas, oil, gas multiunit, gas
+  const recommended = [435, 2800, 2200, 1125]; // DH, HP+retrofit opex, DH, HP
+  const alternative = [1180, 1350, 3850, 435]; // HP at building A, DH not avail, HP, DH not avail
+
+  new Chart(document.getElementById('chart4'), {
+    type: 'bar',
+    data: {
+      labels: profiles,
+      datasets: [
+        { label: 'Current System', data: current, backgroundColor: '#C0392BCC', borderRadius: 2 },
+        { label: 'Recommended Option', data: recommended, backgroundColor: '#2E7D55CC', borderRadius: 2 },
+        { label: 'Alternative Option', data: alternative, backgroundColor: '#1C3F6ECC', borderRadius: 2 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { mode: 'index', intersect: false,
+          callbacks: { label: ctx => `${ctx.dataset.label}: €${ctx.raw.toLocaleString()}/yr` }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+        y: { title: { display: true, text: 'Annual Heating Cost (€/year)' },
+          grid: { color: '#eee' } }
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>

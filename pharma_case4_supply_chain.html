@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fixing the Supply Chain Before the Product Runs Out - Generic Drug Supply Analysis</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Source+Sans+3:wght@300;400;500;600&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#FAFAF7; --surface:#FFFFFF; --border:#E8E6DF; --border2:#D0CEC6; --text:#181818; --muted:#6B6860; --faint:#9B9890; --accent:#1C3F6E; --green:#2E7D55; --red:#C0392B; --amber:#C07A1A; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: 'Source Sans 3', sans-serif; font-weight: 300; line-height: 1.8; font-size: 16px; }
+  nav { position: sticky; top: 0; z-index: 100; background: rgba(250,250,247,0.95); backdrop-filter: blur(6px); border-bottom: 1px solid var(--border); padding: 12px 48px; display: flex; align-items: center; justify-content: space-between; }
+  .nav-left { display: flex; align-items: center; gap: 10px; }
+  nav a { color: var(--muted); text-decoration: none; font-size: 13px; }
+  nav a:hover { color: var(--text); }
+  nav .sep { color: var(--border2); font-size: 12px; }
+  nav .current { color: var(--text); font-weight: 500; font-size: 13px; }
+  .nav-tag { font-family: 'Source Code Pro', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border: 1px solid var(--border2); color: var(--muted); border-radius: 2px; }
+  .hero { max-width: 800px; margin: 72px auto 0; padding: 0 48px; }
+  .case-label { font-family: 'Source Code Pro', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+  .case-label::after { content: ''; display: block; flex: 1; height: 1px; background: var(--border); max-width: 60px; }
+  h1 { font-family: 'Playfair Display', serif; font-size: clamp(30px, 4.5vw, 48px); line-height: 1.15; font-weight: 400; margin-bottom: 22px; letter-spacing: -0.02em; }
+  h1 em { font-style: italic; color: var(--accent); }
+  .hero-deck { font-size: 18px; color: var(--muted); font-weight: 300; line-height: 1.6; max-width: 640px; margin-bottom: 36px; }
+  .meta-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); border: 1px solid var(--border); border-radius: 3px; margin-bottom: 64px; overflow: hidden; }
+  .meta-cell { padding: 16px 20px; border-right: 1px solid var(--border); }
+  .meta-cell:last-child { border-right: none; }
+  .meta-cell label { display: block; font-family: 'Source Code Pro', monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); margin-bottom: 4px; }
+  .meta-cell span { font-size: 13px; font-weight: 500; }
+  .content { max-width: 800px; margin: 0 auto; padding: 0 48px 96px; }
+  .section { margin-bottom: 72px; }
+  .section-marker { font-family: 'Source Code Pro', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); margin-bottom: 12px; }
+  h2 { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 400; line-height: 1.25; margin-bottom: 20px; letter-spacing: -0.01em; }
+  h3 { font-family: 'Source Sans 3', sans-serif; font-size: 15px; font-weight: 600; margin: 28px 0 10px; }
+  p { margin-bottom: 18px; color: #2e2e2e; font-size: 15.5px; }
+  p:last-child { margin-bottom: 0; }
+  .source-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 20px 0; }
+  .source-table th { font-family: 'Source Code Pro', monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); padding: 10px 14px; border-bottom: 2px solid var(--border); text-align: left; font-weight: 500; }
+  .source-table td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.55; }
+  .source-table tr:last-child td { border-bottom: none; }
+  .source-name { font-weight: 500; color: var(--accent); }
+  .source-limit { font-size: 12px; color: var(--muted); margin-top: 3px; font-style: italic; }
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 20px 0; background: var(--surface); border: 1px solid var(--border); border-radius: 3px; overflow: hidden; }
+  .data-table th { font-family: 'Source Code Pro', monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); padding: 11px 14px; border-bottom: 2px solid var(--border); text-align: left; font-weight: 500; background: #F5F4F0; }
+  .data-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: #F9F8F5; }
+  .mono { font-family: 'Source Code Pro', monospace; font-size: 12px; }
+  .badge { display: inline-block; padding: 2px 7px; border-radius: 2px; font-size: 11px; font-weight: 500; }
+  .b-de { background: #EBF0F8; color: #1C3F6E; }
+  .b-fr { background: #FDF0EF; color: #C0392B; }
+  .b-nl { background: #FDF5E6; color: #C07A1A; }
+  .b-pl { background: #EBF5EF; color: #2E7D55; }
+  .b-red { background: #FDF0EF; color: #C0392B; }
+  .b-green { background: #EBF5EF; color: #2E7D55; }
+  .b-amber { background: #FDF5E6; color: #C07A1A; }
+  .chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 3px; padding: 28px 28px 20px; margin: 24px 0; }
+  .chart-title-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); gap: 16px; flex-wrap: wrap; }
+  .chart-title { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 400; }
+  .chart-sub { font-size: 12px; color: var(--muted); font-style: italic; margin-top: 3px; }
+  .chart-num { font-family: 'Source Code Pro', monospace; font-size: 10px; color: var(--faint); white-space: nowrap; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; margin-top: 14px; color: var(--muted); }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .leg-box { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; }
+  .finding { border-left: 3px solid var(--accent); background: #F0F4FA; padding: 18px 22px; border-radius: 0 3px 3px 0; margin: 24px 0; font-size: 14.5px; color: #1a2a3a; line-height: 1.7; }
+  .finding strong { display: block; font-weight: 600; margin-bottom: 8px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+  .alert { border-left: 3px solid var(--red); background: #FDF0EF; padding: 18px 22px; border-radius: 0 3px 3px 0; margin: 24px 0; font-size: 14.5px; color: #2a1010; line-height: 1.7; }
+  .alert strong { display: block; font-weight: 600; margin-bottom: 8px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--red); }
+  .note { border-left: 3px solid var(--border2); background: #F5F4F0; padding: 14px 20px; border-radius: 0 3px 3px 0; margin: 18px 0; font-size: 13.5px; color: var(--muted); line-height: 1.65; }
+  .kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 3px; overflow: hidden; margin: 28px 0; }
+  .kpi { background: var(--surface); padding: 20px; }
+  .kpi-label { font-family: 'Source Code Pro', monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); margin-bottom: 8px; }
+  .kpi-val { font-family: 'Playfair Display', serif; font-size: 28px; line-height: 1; font-weight: 400; margin-bottom: 5px; }
+  .kpi-val.red { color: var(--red); }
+  .kpi-val.green { color: var(--green); }
+  .kpi-val.blue { color: var(--accent); }
+  .kpi-val.amber { color: var(--amber); }
+  .kpi-desc { font-size: 12px; color: var(--muted); line-height: 1.4; }
+  .pull { font-family: 'Playfair Display', serif; font-size: 20px; font-style: italic; line-height: 1.5; color: var(--accent); border-top: 2px solid var(--accent); border-bottom: 1px solid var(--border); padding: 22px 0; margin: 36px 0; }
+  .rec-list { margin: 24px 0; }
+  .rec { display: grid; grid-template-columns: 36px 1fr; gap: 16px; padding: 20px 0; border-bottom: 1px solid var(--border); align-items: start; }
+  .rec:last-child { border-bottom: none; }
+  .rec-n { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--border2); line-height: 1; padding-top: 4px; }
+  .rec-body h4 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .rec-body h4.urgent { color: var(--red); }
+  .rec-body p { font-size: 14px; color: var(--muted); margin: 0; line-height: 1.6; }
+  .rec-tag { display: inline-block; font-family: 'Source Code Pro', monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 7px; border-radius: 2px; margin-bottom: 6px; }
+  .tag-urgent { background: #FDF0EF; color: var(--red); }
+  .tag-short  { background: #FDF5E6; color: var(--amber); }
+  .tag-medium { background: #EBF5EF; color: var(--green); }
+  .tag-ongoing { background: #EBF0F8; color: var(--accent); }
+  hr { border: none; border-top: 1px solid var(--border); margin: 56px 0; }
+  .footnote { font-family: 'Source Code Pro', monospace; font-size: 11px; color: var(--faint); margin-top: 10px; line-height: 1.6; }
+  footer { border-top: 1px solid var(--border); padding: 28px 48px; display: flex; justify-content: space-between; align-items: center; font-family: 'Source Code Pro', monospace; font-size: 11px; color: var(--faint); flex-wrap: wrap; gap: 8px; }
+  footer a { color: var(--faint); text-decoration: none; }
+  footer a:hover { color: var(--text); }
+
+  /* ── DOWNLOAD BAR ── */
+  .download-bar {
+    background: #F0F4FA;
+    border-top: 1px solid #D6E4F0;
+    border-bottom: 1px solid #D6E4F0;
+    padding: 14px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .download-bar-left {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 11px; letter-spacing: 0.06em;
+    color: #6B6860;
+  }
+  .download-bar-left svg { flex-shrink: 0; }
+  .download-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #1C3F6E;
+    color: #fff; text-decoration: none;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.06em;
+    padding: 9px 18px;
+    border-radius: 2px;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .download-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <a href="#">Portfolio</a>
+    <span class="sep">›</span>
+    <a href="#">Pharma &amp; Life Sciences</a>
+    <span class="sep">›</span>
+    <span class="current">Supply Chain Stockout Analysis</span>
+  </div>
+  <div class="nav-tag">Case Study 08 · Pharma</div>
+</nav>
+
+<div class="hero">
+  <div class="case-label">Pharma &amp; Life Sciences · Supply Chain</div>
+  <h1>Fixing the Supply Chain Before the Product Runs Out - <em>Stockout Analysis Across Four Markets</em></h1>
+  <p class="hero-deck">
+    A generic pharmaceutical company had experienced seven stockout events across Germany, France, the Netherlands, and Poland in eighteen months. Demand forecasting was done at the European level. Each market managed its own inventory independently. Nobody saw the shortage coming until it had already arrived.
+  </p>
+  <p class="hero-deck" style="margin-top:-18px;">
+    The improved planning model reduces projected stockouts from 4.7 to 0.8 per year and protects roughly €3.4M of annual revenue for an added working-capital cost of €0.9M.
+  </p>
+  <div class="meta-strip">
+    <div class="meta-cell"><label>Sector</label><span>Generic Pharma · Supply</span></div>
+    <div class="meta-cell"><label>Markets</label><span>DE · FR · NL · PL</span></div>
+    <div class="meta-cell"><label>Stockout Events</label><span>7 in 18 months</span></div>
+    <div class="meta-cell"><label>Lost Revenue</label><span>€4.2M estimated</span></div>
+    <div class="meta-cell"><label>Forecast Error</label><span>MAPE 31%</span></div>
+  </div>
+</div>
+
+<div class="download-bar">
+  <div class="download-bar-left">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <rect x="1.5" y="1.5" width="13" height="13" rx="1.5" stroke="#1C3F6E" stroke-width="1.2"/>
+      <path d="M5 7.5h6M5 5h4M5 10h3" stroke="#1C3F6E" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>
+    This case includes a downloadable Excel workbook - data model, calculations, and dashboard.
+  </div>
+  <a href="Pharma_Case4_Supply_Chain.xlsx" download class="download-btn">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <path d="M6.5 1v8M3.5 6.5l3 3 3-3M1 11h11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Download Excel Working File
+  </a>
+</div>
+
+<div class="content">
+
+  <div class="section">
+    <div class="section-marker">Context</div>
+    <h2>Why this problem matters</h2>
+    <p>
+      Generic pharmaceutical supply chains operate on margins that leave almost no tolerance for inefficiency. A branded product company can sometimes absorb a stockout by redirecting commercial effort; for a generic manufacturer, a stockout means a competitor's product fills the gap immediately and irreversibly - pharmacies substitution-switch, and returning to pre-stockout volume can take months or never happen at all.
+    </p>
+    <p>
+      Seven stockout events in eighteen months for a single product is not a run of bad luck. At the frequency recorded here, it is a structural failure of the supply planning process. The EMA's shortage reporting database and academic analysis of European pharmaceutical supply chain failures consistently identify three root causes: demand forecasting that does not account for market-specific drivers, inventory policies set at an aggregate level that mask country-level exposure, and lead time assumptions that do not reflect actual supplier performance.
+    </p>
+    <p>
+      The product in this analysis is a chronic disease generic, a cardiovascular agent used for long-term patient management, with a relatively stable but not static demand profile. It is not an emergency medicine, but its absence creates substitution events that are difficult and costly to reverse. The company had invested in ERP-based supply planning, but had not built the analytical layer that would flag country-level demand divergence before stock ran out.
+    </p>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">Data Foundation</div>
+    <h2>Data sources and their role in this analysis</h2>
+
+    <table class="source-table">
+      <thead>
+        <tr><th>Source</th><th>What it provided</th><th>Used for</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="source-name">EMA SPOC Shortage Reporting Database</div>
+            <div class="source-limit">Reporting is mandatory but definitions vary by member state. NL and DE data are more complete than PL.</div>
+          </td>
+          <td>Shortage notifications by product, country, and duration for European pharmaceutical products 2021–2023.</td>
+          <td>Benchmark shortage frequency and duration for comparable generic cardiovascular products. Regulatory reporting timeline reference.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">IQVIA MIDAS Sales Data - Cardiovascular Generics</div>
+            <div class="source-limit">Sales-out data, not patient demand. Stocking and destocking by wholesalers can create apparent demand swings.</div>
+          </td>
+          <td>Monthly sales volume by country for the product and three comparable generics. Market share trends and substitution patterns.</td>
+          <td>Demand baseline, seasonality decomposition, and competitive demand response analysis.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">PGEU / EAEPC European Pharmacy Wholesale Data</div>
+            <div class="source-limit">Wholesaler-level, not pharmacy-level. Patient-level demand must be inferred.</div>
+          </td>
+          <td>Wholesaler ordering patterns, safety stock holding, and distribution channel structure by country.</td>
+          <td>Buffer stock modelling. Distribution lead time estimation by market.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">EMA / ECDC Epidemiological Surveillance Data</div>
+            <div class="source-limit">Aggregated by condition category, not by specific drug or dosage form.</div>
+          </td>
+          <td>Incidence and prevalence trends for cardiovascular disease by age group and country.</td>
+          <td>Structural demand driver modelling - population ageing effect on long-run demand growth by market.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">Procurement / ERP Supplier Performance Records</div>
+            <div class="source-limit">Internal data; illustrated here with anonymised structure consistent with published supply chain benchmarks.</div>
+          </td>
+          <td>Actual API and finished goods lead times from primary and secondary suppliers over 24 months. On-time delivery rates.</td>
+          <td>Lead time variability modelling. Safety stock calculation under variable lead time scenarios.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">The Situation</div>
+    <h2>What the company was facing</h2>
+    <p>
+      Between January 2022 and June 2023, the company experienced seven stockout events: three in Germany, two in France, one in the Netherlands, and one in Poland. Each event lasted between 12 and 47 days. Each was identified reactively - by a country sales manager receiving a complaint from a distribution customer or a wholesale account flagging an inability to fulfil pharmacy orders.
+    </p>
+
+    <div class="pull">
+      "The European supply plan showed inventory above the minimum target every month except the month the stockout happened. The problem was always a surprise, and it was never supposed to be."
+    </div>
+
+    <p>
+      The supply planning process operated as follows: the central supply chain team produced a 12-month rolling demand forecast at the European level, which was then split by country using a fixed market-share allocation based on the previous year's sales. Each country received a quarterly shipment allocation based on this split. Country inventory levels were monitored by local teams against a minimum stock threshold set at four weeks of average demand. The problem with this system is visible in retrospect: it used last year's market shares to allocate this year's inventory, it set the safety stock threshold based on average demand without accounting for demand variability, and it set lead times in the model at the contractual norm rather than the actual supplier performance.
+    </p>
+
+    <table class="data-table">
+      <thead>
+        <tr><th>Market</th><th>Stockout Events</th><th>Avg Duration (days)</th><th>Est. Revenue Loss</th><th>Substitution Risk</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="badge b-de">Germany</span></td><td class="mono">3</td><td class="mono">28 days</td><td class="mono">€1.8M</td><td><span class="badge b-red">High</span></td></tr>
+        <tr><td><span class="badge b-fr">France</span></td><td class="mono">2</td><td class="mono">22 days</td><td class="mono">€1.4M</td><td><span class="badge b-amber">Medium</span></td></tr>
+        <tr><td><span class="badge b-nl">Netherlands</span></td><td class="mono">1</td><td class="mono">14 days</td><td class="mono">€0.6M</td><td><span class="badge b-amber">Medium</span></td></tr>
+        <tr><td><span class="badge b-pl">Poland</span></td><td class="mono">1</td><td class="mono">47 days</td><td class="mono">€0.4M</td><td><span class="badge b-red">High</span></td></tr>
+        <tr><td><strong>Total</strong></td><td class="mono"><strong>7</strong></td><td class="mono"><strong>~27 days avg</strong></td><td class="mono"><strong>€4.2M</strong></td><td></td></tr>
+      </tbody>
+    </table>
+    <p class="footnote">Revenue loss estimated from volume shortfall × net selling price per unit. Substitution risk assessed from market-specific generic dispensing regulations - Germany's Aut-idem rules and Polish pharmacy substitution practice create higher permanent substitution risk than France or NL.</p>
+
+    <div class="kpi-strip">
+      <div class="kpi">
+        <div class="kpi-label">Stockout Events (18 months)</div>
+        <div class="kpi-val red">7</div>
+        <div class="kpi-desc">Across 4 markets. Industry benchmark for comparable generics: ≤1 per market per year.</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Forecast MAPE</div>
+        <div class="kpi-val red">31%</div>
+        <div class="kpi-desc">Mean absolute percentage error - well above the 10–15% target for this product type.</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Estimated Revenue Loss</div>
+        <div class="kpi-val red">€4.2M</div>
+        <div class="kpi-desc">Direct revenue shortfall from stockout periods. Excludes long-term substitution losses.</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Safety Stock (Current)</div>
+        <div class="kpi-val amber">4 weeks</div>
+        <div class="kpi-desc">Flat threshold across all markets - does not account for variability or lead time differences.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">Analysis · Step 1</div>
+    <h2>Where is the demand forecast going wrong?</h2>
+    <p>
+      The first question was whether the stockouts were caused by demand being systematically higher than forecast, by demand being highly variable but accurately forecast on average, or by both. A MAPE of 31% at the European level obscures what is happening at country level - and it is at country level that inventory is either present or absent.
+    </p>
+    <p>
+      The demand time series was decomposed by country using 18 months of sales-out data from IQVIA MIDAS. The decomposition separated trend, seasonality, and irregular components. The European-level forecast used a simple linear trend with no seasonality adjustment. Germany showed a pronounced Q1 uplift - consistent with chronic disease restocking dynamics at the start of the insurance year - that was absent from France and the Netherlands but present in an attenuated form in Poland.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">Actual vs Forecast Demand by Market - Monthly Volume (Indexed)</div>
+          <div class="chart-sub">Indexed to each market's 18-month average. Forecast line = European top-down allocation.</div>
+        </div>
+        <div class="chart-num">Chart 1 of 4</div>
+      </div>
+      <div style="height:340px; position:relative"><canvas id="chart1"></canvas></div>
+      <div class="legend">
+        <div class="legend-item"><div class="leg-box" style="background:#1C3F6E"></div>Germany (actual)</div>
+        <div class="legend-item"><div class="leg-box" style="background:#C0392B"></div>France (actual)</div>
+        <div class="legend-item"><div class="leg-box" style="background:#C07A1A"></div>Netherlands (actual)</div>
+        <div class="legend-item"><div class="leg-box" style="background:#2E7D55"></div>Poland (actual)</div>
+        <div class="legend-item"><div class="leg-box" style="background:#aaa; border-top: 2px dashed #666; height: 2px; width: 20px; border-radius: 0;"></div>Forecast (all mkts)</div>
+      </div>
+    </div>
+
+    <div class="alert">
+      <strong>Germany's Q1 uplift is the primary forecast failure</strong>
+      Germany shows a consistent 35–45% demand increase in Q1 (January–March) relative to the annual average - driven by the annual reset of statutory insurance co-payment thresholds and patient restocking at the start of the benefit year. This pattern is documented in German pharmacy dispensing research and is predictable from the calendar. The European-level forecast model captured none of it. Every one of Germany's three stockout events occurred in Q1 or early Q2 - after the demand spike had depleted safety stock and before the quarterly replenishment shipment arrived.
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">Analysis · Step 2</div>
+    <h2>Is the safety stock level actually adequate?</h2>
+    <p>
+      A four-week safety stock threshold set against average demand is a design choice that works only if demand is relatively stable and supplier lead times are predictable. If demand is variable and lead times are variable, a safety stock calculated from averages will systematically under-protect against the tail risk that actually causes stockouts.
+    </p>
+    <p>
+      The correct safety stock for a given market is a function of demand variability, lead time variability, and target service level. The model uses a 95% service level and calculates safety stock using weekly demand standard deviation, average replenishment lead time, lead time standard deviation, and the z-score for the target service level. This makes the policy responsive to market risk rather than applying the same four-week rule everywhere.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">Required Safety Stock (weeks) - Statistical Model vs Current Policy</div>
+          <div class="chart-sub">95% service level target. Calculated from demand variability and actual supplier lead time distribution per market.</div>
+        </div>
+        <div class="chart-num">Chart 2 of 4</div>
+      </div>
+      <div style="height:300px; position:relative"><canvas id="chart2"></canvas></div>
+      <div class="legend">
+        <div class="legend-item"><div class="leg-box" style="background:#1C3F6E"></div>Required (statistical model)</div>
+        <div class="legend-item"><div class="leg-box" style="background:#E8E6DF; border: 1px solid #B0BEC5"></div>Current policy (4 weeks, all markets)</div>
+      </div>
+    </div>
+
+    <div class="finding">
+      <strong>Germany and Poland are significantly under-protected by the current policy</strong>
+      Germany requires 8.4 weeks of safety stock to meet a 95% service level target, given its demand variability (exacerbated by the Q1 uplift) and its lead time profile from the primary supplier. Poland's combination of higher demand variability and longer average lead time (driven by its position at the end of the distribution chain) produces a required safety stock of 7.1 weeks. The Netherlands and France require 4.8 and 5.2 weeks respectively - modestly above the current policy but not dramatically so. The current four-week flat policy is adequate only for the Netherlands and arguably for France; it is materially under-protective for Germany and Poland.
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">Analysis · Step 3</div>
+    <h2>What is supplier lead time actually doing?</h2>
+    <p>
+      The supply plan used a contractual lead time of 8 weeks from API supplier to finished goods delivery. Actual lead time performance over the 24-month analysis period told a different story: average actual lead time was 11.2 weeks, with a standard deviation of 2.8 weeks and individual observations ranging from 7 to 18 weeks. A supply plan calibrated to an 8-week lead time, receiving inventory on an 11-week average schedule, is structurally short of stock 100% of the time.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">Supplier Lead Time Distribution - Actual vs Plan (Weeks, 24-Month Period)</div>
+          <div class="chart-sub">Frequency distribution of actual API-to-delivery lead times. Plan assumption: 8 weeks.</div>
+        </div>
+        <div class="chart-num">Chart 3 of 4</div>
+      </div>
+      <div style="height:300px; position:relative"><canvas id="chart3"></canvas></div>
+    </div>
+
+    <div class="alert">
+      <strong>The plan was using a lead time that was almost never achieved</strong>
+      The 8-week contractual lead time was achieved in only 12% of observed replenishment cycles. The distribution is right-skewed, with a meaningful tail extending to 16–18 weeks - driven by API batch testing delays at the supplier and customs clearance delays at the Polish border. A supply plan that uses the 8-week contractual lead time as its planning assumption is operating in a state of permanent optimism. The correct planning lead time - the P80 of the observed distribution - is 14 weeks. Planning to 14 weeks would require a larger average inventory position but would eliminate the lead time mismatch as a structural cause of stockouts.
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">Analysis · Step 4</div>
+    <h2>What does the improved model predict - and what does it cost?</h2>
+    <p>
+      The three root causes identified - inadequate demand forecasting (MAPE 31% vs target 10–15%), safety stock policy calibrated to average demand rather than variability, and lead time assumptions calibrated to contract rather than actual performance - were each modelled independently and then in combination to estimate the service level improvement and the inventory cost of remediation.
+    </p>
+    <p>
+      The combined scenario models what happens if the demand forecast is rebuilt at country level with seasonality, safety stock is recalculated using the statistical model at 95% service level, and the planning lead time is updated to the P80 of the observed distribution. The cost of the higher average inventory position - additional working capital tied up in safety stock - is compared against the revenue loss avoided.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">Projected Stockout Frequency and Inventory Cost - Current vs Improved Model</div>
+          <div class="chart-sub">Simulation based on 18-month demand history and lead time distribution. Annualised projections.</div>
+        </div>
+        <div class="chart-num">Chart 4 of 4</div>
+      </div>
+      <div style="height:320px; position:relative"><canvas id="chart4"></canvas></div>
+      <div class="legend">
+        <div class="legend-item"><div class="leg-box" style="background:#C0392B"></div>Current model</div>
+        <div class="legend-item"><div class="leg-box" style="background:#2E7D55"></div>Country-level forecast only</div>
+        <div class="legend-item"><div class="leg-box" style="background:#1C3F6E"></div>Forecast + safety stock</div>
+        <div class="legend-item"><div class="leg-box" style="background:#C07A1A"></div>Full combined model</div>
+      </div>
+    </div>
+
+    <div class="kpi-strip">
+      <div class="kpi">
+        <div class="kpi-label">Projected Stockouts (Current)</div>
+        <div class="kpi-val red">4.7/yr</div>
+        <div class="kpi-desc">Annualised from 18-month observed rate of 7 events</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Projected Stockouts (Combined Model)</div>
+        <div class="kpi-val green">0.8/yr</div>
+        <div class="kpi-desc">Below the ≤1 per market per year benchmark. Confidence interval: 0–2.</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Additional Safety Stock Cost</div>
+        <div class="kpi-val amber">€0.9M</div>
+        <div class="kpi-desc">Annual working capital increase to carry higher safety stock per statistical model</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Revenue Protected (Annual)</div>
+        <div class="kpi-val green">~€3.4M</div>
+        <div class="kpi-desc">Estimated annual revenue preserved vs current model. ROI positive within 4 months.</div>
+      </div>
+    </div>
+
+    <div class="note">
+      The combined model assumes no improvement in supplier lead time performance. All modelling uses the observed actual lead time distribution, not the contractual norm. If the company also engages the API supplier on lead time performance and achieves a reduction in P80 lead time from 14 to 11 weeks, the required safety stock decreases and the working capital cost falls to approximately €0.6M. Supplier engagement is a separate workstream from the planning improvements and should be pursued in parallel.
+    </div>
+
+    <table class="data-table" style="margin-top:24px">
+      <thead>
+        <tr><th>Market</th><th>Main Driver</th><th>Annual Revenue Protected</th><th>Planning Change</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Germany</td><td>Q1 seasonal uplift</td><td class="mono">~€1.5M</td><td>Pre-build Q1 stock before December</td></tr>
+        <tr><td>France</td><td>Moderate forecast bias</td><td class="mono">~€0.8M</td><td>Country-level forecast and 5.2-week safety stock</td></tr>
+        <tr><td>Netherlands</td><td>Shorter stockout duration</td><td class="mono">~€0.4M</td><td>Maintain near-current policy with monitoring</td></tr>
+        <tr><td>Poland</td><td>Lead time and distribution delay</td><td class="mono">~€0.7M</td><td>7.1-week safety stock and supplier lead time review</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">Recommendations</div>
+    <h2>What the analysis points to</h2>
+    <p>
+      Actions are prioritised by urgency and ease of implementation. Calendar-driven German stockouts can be addressed immediately, while structural forecasting and safety stock redesign follow as system improvements.
+    </p>
+
+    <div class="rec-list">
+      <div class="rec">
+        <div class="rec-n">1</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-urgent">Immediate</span>
+          <h4 class="urgent">Pre-build Q1 German inventory before October - implement as a standing annual instruction</h4>
+          <p>Germany's Q1 demand spike is predictable, calendar-driven, and responsible for all three German stockout events. The supply chain team should place a supplementary Q4 order each year, sized to cover the expected Q1 uplift above average demand based on the country-level seasonal model. The deadlines: supplementary order placed no later than October 1; stock in German warehouse by December 15. This is the single highest-impact action and can be implemented before any system change. It requires no new budget approval because it accelerates inventory build by one quarter.</p><p>Expected impact: prevent the recurring German Q1 stockout pattern and protect roughly €1.5M of annual revenue.</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="rec-n">2</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-urgent">Immediate</span>
+          <h4 class="urgent">Update planning lead time from 8 weeks (contract) to 14 weeks (P80 actual)</h4>
+          <p>The 8-week contractual lead time is achieved in 12% of cycles. Using it as the planning assumption guarantees a structural inventory shortfall. The ERP planning parameters should be updated immediately to use a 14-week planning lead time for all four markets. This will trigger an initial larger replenishment order as the system recalibrates to the new assumption - which is intentional. The finance team should be briefed on the one-time working capital increase (~€0.4M over two quarters) before the parameter change is made.</p><p>Expected impact: remove the structural planning mismatch that caused the ERP to assume replenishment earlier than it actually arrived.</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="rec-n">3</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-short">Short Term</span>
+          <h4>Rebuild country-level demand forecasts with seasonality and replace the European top-down allocation</h4>
+          <p>The current European-level forecast split by fixed market share is the methodological root cause of the forecast error. Country-level forecasts should be built independently for each market, using at minimum a simple seasonal decomposition (Holt-Winters or equivalent) calibrated to the market-specific drivers documented in this analysis. The technical implementation can be done in the company's existing ERP or in a spreadsheet-based planning tool while the ERP model is updated. The key behavioral change is that country-level demand input should come from the country commercial teams, not be derived mechanically from the European total.</p><p>Expected impact: reduce forecast MAPE from 31% toward the 10-15% planning target for stable chronic-disease generics.</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="rec-n">4</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-medium">Medium Term</span>
+          <h4>Implement statistical safety stock policy - differentiated by market based on variability and lead time</h4>
+          <p>The flat four-week safety stock policy should be replaced by a market-specific policy calculated from the statistical model documented in this analysis. Germany: 8.4 weeks. Poland: 7.1 weeks. France: 5.2 weeks. Netherlands: 4.8 weeks. These levels should be reviewed annually using the rolling 24-month demand and lead time data. Building the safety stock recalculation as a quarterly management information output, alongside the MAPE tracking, ensures the policy adapts to changing market conditions rather than remaining fixed at a level set in a different demand environment.</p><p>Expected impact: reduce annual projected stockouts to 0.8 per year while keeping incremental working capital within the €0.9M modelled cost.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">Model Notes</div>
+    <h2>Assumptions and limitations</h2>
+    <p>
+      Demand and stockout data are illustrative and calibrated to public shortage and generic-market benchmarks. Actual implementation would require ERP, sales-out, wholesaler, and supplier delivery data at SKU and country level.
+    </p>
+    <p>
+      Revenue protected is estimated from avoided stockout volume multiplied by net selling price. It excludes longer-term substitution losses, payer penalties, and patient switching behaviour after shortages.
+    </p>
+    <p>
+      The safety stock model assumes normally distributed demand and lead time variability. In practice, extreme events such as supplier quality holds or regulatory disruptions would require separate scenario buffers.
+    </p>
+    <p>
+      The combined model assumes no improvement in supplier lead time. Supplier performance improvement would lower working-capital requirements, but should be treated as a separate negotiation and quality workstream.
+    </p>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">References</div>
+    <h2>Full citations</h2>
+    <ul style="font-size:13.5px; color:var(--muted); line-height:2.2; padding-left:18px">
+      <li>European Medicines Agency (2023). <em>Report on Medicine Shortages in the EU/EEA 2022</em>. Amsterdam: EMA. SPOC shortage notification database.</li>
+      <li>IQVIA Institute (2023). <em>Medicine Shortages in Europe: A Persistent and Growing Challenge</em>. Parsippany: IQVIA.</li>
+      <li>Pharmaceutical Group of the European Union (2023). <em>PGEU Annual Report 2022 - Medicine Supply Chain Issues</em>. Brussels: PGEU.</li>
+      <li>European Association of Euro-Pharmaceutical Companies (2022). <em>Parallel Trade and Medicine Supply Stability in the EU</em>. Brussels: EAEPC.</li>
+      <li>Pauwels K, et al. (2023). "Pharmaceutical supply chain vulnerabilities in Europe: lessons from shortages 2018–2022." <em>The Lancet Regional Health - Europe</em>, 24:100543.</li>
+      <li>Silver EA, Pyke DF, Thomas DJ (2017). <em>Inventory and Production Management in Supply Chains</em>. 4th ed. Boca Raton: CRC Press.</li>
+      <li>Sachverständigenrat Gesundheit (2022). <em>Gesundheit - Mehr Qualität sichern (Annual Report 2022): Arzneimittelversorgung</em>. Berlin: SVR.</li>
+    </ul>
+  </div>
+
+</div>
+
+<footer>
+  <span>Business Analyst Portfolio · Pharma &amp; Life Sciences Case 04 of 04</span>
+  <a href="#">← Back to Portfolio</a>
+</footer>
+
+<script>
+Chart.defaults.font.family = "'Source Sans 3', sans-serif";
+Chart.defaults.color = '#555';
+
+// Chart 1 - Actual vs forecast demand by market
+(function(){
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun'];
+  const forecast = Array(18).fill(100);
+  const de = [138,142,136,108,96,92,94,98,102,105,108,112,140,145,138,110,98,94];
+  const fr = [98,100,105,102,99,96,98,101,103,104,106,108,100,102,106,103,100,97];
+  const nl = [104,102,100,98,96,98,100,102,104,105,106,108,106,103,101,99,97,99];
+  const pl = [110,108,112,106,96,90,88,90,92,96,100,106,114,112,115,108,98,92];
+
+  new Chart(document.getElementById('chart1'), {
+    type: 'line',
+    data: {
+      labels: months,
+      datasets: [
+        { label: 'Germany', data: de, borderColor: '#1C3F6E', tension: 0.3, borderWidth: 2, pointRadius: 2, fill: false },
+        { label: 'France', data: fr, borderColor: '#C0392B', tension: 0.3, borderWidth: 2, pointRadius: 2, fill: false },
+        { label: 'Netherlands', data: nl, borderColor: '#C07A1A', tension: 0.3, borderWidth: 2, pointRadius: 2, fill: false },
+        { label: 'Poland', data: pl, borderColor: '#2E7D55', tension: 0.3, borderWidth: 2, pointRadius: 2, fill: false },
+        { label: 'Forecast', data: forecast, borderColor: '#999', borderDash: [6, 4], borderWidth: 1.5, pointRadius: 0, fill: false }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { title: { display: true, text: 'Demand Index (avg = 100)' }, grid: { color: '#eee' }, min: 75, max: 160 }
+      }
+    }
+  });
+})();
+
+// Chart 2 - Required vs current safety stock
+(function(){
+  new Chart(document.getElementById('chart2'), {
+    type: 'bar',
+    data: {
+      labels: ['Germany', 'Poland', 'France', 'Netherlands'],
+      datasets: [
+        { label: 'Required (statistical)', data: [8.4, 7.1, 5.2, 4.8], backgroundColor: '#1C3F6E', borderRadius: 2 },
+        { label: 'Current policy', data: [4, 4, 4, 4], backgroundColor: '#E8E6DF', borderColor: '#B0BEC5', borderWidth: 1, borderRadius: 2 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw} weeks` } } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { title: { display: true, text: 'Safety Stock (weeks)' }, grid: { color: '#eee' }, max: 11 }
+      }
+    }
+  });
+})();
+
+// Chart 3 - Lead time distribution
+(function(){
+  const buckets = ['7 wks', '8 wks', '9 wks', '10 wks', '11 wks', '12 wks', '13 wks', '14 wks', '15 wks', '16+ wks'];
+  const freq = [2, 8, 14, 18, 22, 16, 10, 6, 4, 8]; // % of observations
+  new Chart(document.getElementById('chart3'), {
+    type: 'bar',
+    data: {
+      labels: buckets,
+      datasets: [{
+        label: 'Frequency (%)',
+        data: freq,
+        backgroundColor: buckets.map((_, i) => i <= 1 ? '#2E7D55' : i >= 7 ? '#C0392B' : '#1C3F6E'),
+        borderRadius: 2
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        annotation: {},
+        tooltip: { callbacks: { label: ctx => `${ctx.raw}% of cycles` } }
+      },
+      scales: {
+        x: { grid: { display: false }, title: { display: true, text: 'Actual Lead Time' } },
+        y: { title: { display: true, text: '% of Replenishment Cycles' }, grid: { color: '#eee' }, ticks: { callback: v => v + '%' } }
+      }
+    }
+  });
+})();
+
+// Chart 4 - Projected stockout frequency vs inventory cost by model
+(function(){
+  new Chart(document.getElementById('chart4'), {
+    type: 'bar',
+    data: {
+      labels: ['Current Model', 'Country Forecast\nOnly', 'Forecast +\nSafety Stock', 'Full Combined\nModel'],
+      datasets: [
+        {
+          label: 'Projected Annual Stockouts',
+          data: [4.7, 2.8, 1.4, 0.8],
+          backgroundColor: ['#C0392B', '#2E7D55', '#1C3F6E', '#C07A1A'],
+          borderRadius: 2,
+          yAxisID: 'y'
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { title: { display: true, text: 'Projected Annual Stockout Events' }, grid: { color: '#eee' }, max: 6 }
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>

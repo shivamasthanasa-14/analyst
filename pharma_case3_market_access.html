@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Can We Afford to Launch? - Market Access and Pricing Analysis</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Source+Sans+3:wght@300;400;500;600&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#FAFAF7; --surface:#FFFFFF; --border:#E8E6DF; --border2:#D0CEC6; --text:#181818; --muted:#6B6860; --faint:#9B9890; --accent:#1C3F6E; --green:#2E7D55; --red:#C0392B; --amber:#C07A1A; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: 'Source Sans 3', sans-serif; font-weight: 300; line-height: 1.8; font-size: 16px; }
+  nav { position: sticky; top: 0; z-index: 100; background: rgba(250,250,247,0.95); backdrop-filter: blur(6px); border-bottom: 1px solid var(--border); padding: 12px 48px; display: flex; align-items: center; justify-content: space-between; }
+  .nav-left { display: flex; align-items: center; gap: 10px; }
+  nav a { color: var(--muted); text-decoration: none; font-size: 13px; }
+  nav a:hover { color: var(--text); }
+  nav .sep { color: var(--border2); font-size: 12px; }
+  nav .current { color: var(--text); font-weight: 500; font-size: 13px; }
+  .nav-tag { font-family: 'Source Code Pro', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border: 1px solid var(--border2); color: var(--muted); border-radius: 2px; }
+  .hero { max-width: 800px; margin: 72px auto 0; padding: 0 48px; }
+  .case-label { font-family: 'Source Code Pro', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+  .case-label::after { content: ''; display: block; flex: 1; height: 1px; background: var(--border); max-width: 60px; }
+  h1 { font-family: 'Playfair Display', serif; font-size: clamp(30px, 4.5vw, 48px); line-height: 1.15; font-weight: 400; margin-bottom: 22px; letter-spacing: -0.02em; }
+  h1 em { font-style: italic; color: var(--accent); }
+  .hero-deck { font-size: 18px; color: var(--muted); font-weight: 300; line-height: 1.6; max-width: 640px; margin-bottom: 36px; }
+  .meta-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); border: 1px solid var(--border); border-radius: 3px; margin-bottom: 64px; overflow: hidden; }
+  .meta-cell { padding: 16px 20px; border-right: 1px solid var(--border); }
+  .meta-cell:last-child { border-right: none; }
+  .meta-cell label { display: block; font-family: 'Source Code Pro', monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); margin-bottom: 4px; }
+  .meta-cell span { font-size: 13px; font-weight: 500; }
+  .content { max-width: 800px; margin: 0 auto; padding: 0 48px 96px; }
+  .section { margin-bottom: 72px; }
+  .section-marker { font-family: 'Source Code Pro', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); margin-bottom: 12px; }
+  h2 { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 400; line-height: 1.25; margin-bottom: 20px; letter-spacing: -0.01em; }
+  h3 { font-family: 'Source Sans 3', sans-serif; font-size: 15px; font-weight: 600; margin: 28px 0 10px; }
+  p { margin-bottom: 18px; color: #2e2e2e; font-size: 15.5px; }
+  p:last-child { margin-bottom: 0; }
+  .source-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 20px 0; }
+  .source-table th { font-family: 'Source Code Pro', monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); padding: 10px 14px; border-bottom: 2px solid var(--border); text-align: left; font-weight: 500; }
+  .source-table td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.55; }
+  .source-table tr:last-child td { border-bottom: none; }
+  .source-name { font-weight: 500; color: var(--accent); }
+  .source-limit { font-size: 12px; color: var(--muted); margin-top: 3px; font-style: italic; }
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 20px 0; background: var(--surface); border: 1px solid var(--border); border-radius: 3px; overflow: hidden; }
+  .data-table th { font-family: 'Source Code Pro', monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); padding: 11px 14px; border-bottom: 2px solid var(--border); text-align: left; font-weight: 500; background: #F5F4F0; }
+  .data-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: #F9F8F5; }
+  .mono { font-family: 'Source Code Pro', monospace; font-size: 12px; }
+  .badge { display: inline-block; padding: 2px 7px; border-radius: 2px; font-size: 11px; font-weight: 500; }
+  .b-de { background: #EBF0F8; color: #1C3F6E; }
+  .b-fr { background: #FDF0EF; color: #C0392B; }
+  .b-nl { background: #FDF5E6; color: #C07A1A; }
+  .b-green { background: #EBF5EF; color: #2E7D55; }
+  .b-red { background: #FDF0EF; color: #C0392B; }
+  .b-amber { background: #FDF5E6; color: #C07A1A; }
+  .chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 3px; padding: 28px 28px 20px; margin: 24px 0; }
+  .chart-title-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); gap: 16px; flex-wrap: wrap; }
+  .chart-title { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 400; }
+  .chart-sub { font-size: 12px; color: var(--muted); font-style: italic; margin-top: 3px; }
+  .chart-num { font-family: 'Source Code Pro', monospace; font-size: 10px; color: var(--faint); white-space: nowrap; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; margin-top: 14px; color: var(--muted); }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .leg-box { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; }
+  .finding { border-left: 3px solid var(--accent); background: #F0F4FA; padding: 18px 22px; border-radius: 0 3px 3px 0; margin: 24px 0; font-size: 14.5px; color: #1a2a3a; line-height: 1.7; }
+  .finding strong { display: block; font-weight: 600; margin-bottom: 8px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+  .alert { border-left: 3px solid var(--red); background: #FDF0EF; padding: 18px 22px; border-radius: 0 3px 3px 0; margin: 24px 0; font-size: 14.5px; color: #2a1010; line-height: 1.7; }
+  .alert strong { display: block; font-weight: 600; margin-bottom: 8px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--red); }
+  .note { border-left: 3px solid var(--border2); background: #F5F4F0; padding: 14px 20px; border-radius: 0 3px 3px 0; margin: 18px 0; font-size: 13.5px; color: var(--muted); line-height: 1.65; }
+  .kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 3px; overflow: hidden; margin: 28px 0; }
+  .kpi { background: var(--surface); padding: 20px; }
+  .kpi-label { font-family: 'Source Code Pro', monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); margin-bottom: 8px; }
+  .kpi-val { font-family: 'Playfair Display', serif; font-size: 28px; line-height: 1; font-weight: 400; margin-bottom: 5px; }
+  .kpi-val.red { color: var(--red); }
+  .kpi-val.green { color: var(--green); }
+  .kpi-val.blue { color: var(--accent); }
+  .kpi-val.amber { color: var(--amber); }
+  .kpi-desc { font-size: 12px; color: var(--muted); line-height: 1.4; }
+  .pull { font-family: 'Playfair Display', serif; font-size: 20px; font-style: italic; line-height: 1.5; color: var(--accent); border-top: 2px solid var(--accent); border-bottom: 1px solid var(--border); padding: 22px 0; margin: 36px 0; }
+  .rec-list { margin: 24px 0; }
+  .rec { display: grid; grid-template-columns: 36px 1fr; gap: 16px; padding: 20px 0; border-bottom: 1px solid var(--border); align-items: start; }
+  .rec:last-child { border-bottom: none; }
+  .rec-n { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--border2); line-height: 1; padding-top: 4px; }
+  .rec-body h4 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .rec-body h4.urgent { color: var(--red); }
+  .rec-body p { font-size: 14px; color: var(--muted); margin: 0; line-height: 1.6; }
+  .rec-tag { display: inline-block; font-family: 'Source Code Pro', monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 7px; border-radius: 2px; margin-bottom: 6px; }
+  .tag-urgent { background: #FDF0EF; color: var(--red); }
+  .tag-short  { background: #FDF5E6; color: var(--amber); }
+  .tag-medium { background: #EBF5EF; color: var(--green); }
+  .tag-ongoing { background: #EBF0F8; color: var(--accent); }
+  hr { border: none; border-top: 1px solid var(--border); margin: 56px 0; }
+  .footnote { font-family: 'Source Code Pro', monospace; font-size: 11px; color: var(--faint); margin-top: 10px; line-height: 1.6; }
+  footer { border-top: 1px solid var(--border); padding: 28px 48px; display: flex; justify-content: space-between; align-items: center; font-family: 'Source Code Pro', monospace; font-size: 11px; color: var(--faint); flex-wrap: wrap; gap: 8px; }
+  footer a { color: var(--faint); text-decoration: none; }
+  footer a:hover { color: var(--text); }
+
+  /* ── DOWNLOAD BAR ── */
+  .download-bar {
+    background: #F0F4FA;
+    border-top: 1px solid #D6E4F0;
+    border-bottom: 1px solid #D6E4F0;
+    padding: 14px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .download-bar-left {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 11px; letter-spacing: 0.06em;
+    color: #6B6860;
+  }
+  .download-bar-left svg { flex-shrink: 0; }
+  .download-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #2E7D55;
+    color: #fff; text-decoration: none;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.06em;
+    padding: 9px 18px;
+    border-radius: 2px;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .download-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <a href="#">Portfolio</a>
+    <span class="sep">›</span>
+    <a href="#">Pharma &amp; Life Sciences</a>
+    <span class="sep">›</span>
+    <span class="current">Market Access &amp; Launch Pricing</span>
+  </div>
+  <div class="nav-tag">Case Study 07 · Pharma</div>
+</nav>
+
+<div class="hero">
+  <div class="case-label">Pharma &amp; Life Sciences · Market Access</div>
+  <h1>Can We Afford to Launch? - <em>HTA Mapping and Pricing Scenarios for a Specialty Drug</em></h1>
+  <p class="hero-deck">
+    A specialty drug preparing to launch in Germany, France, and the Netherlands faced three different HTA frameworks and price referencing dynamics that would lock the global price anchor for years. The scenarios had not been built.
+  </p>
+  <p class="hero-deck" style="margin-top:-18px;">
+    The sequencing decision changes the 5-year EU revenue case by roughly €630M under base-case HTA assumptions, making launch order a strategic pricing decision rather than an operational timeline choice.
+  </p>
+  <div class="meta-strip">
+    <div class="meta-cell"><label>Sector</label><span>Market Access</span></div>
+    <div class="meta-cell"><label>Markets</label><span>DE · FR · NL</span></div>
+    <div class="meta-cell"><label>Therapy Area</label><span>Specialty (Oncology)</span></div>
+    <div class="meta-cell"><label>Price Anchor Risk</label><span>IRP exposure: 26 mkts</span></div>
+    <div class="meta-cell"><label>Launch Decision</label><span>12-month window</span></div>
+  </div>
+</div>
+
+<div class="download-bar">
+  <div class="download-bar-left">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <rect x="1.5" y="1.5" width="13" height="13" rx="1.5" stroke="#2E7D55" stroke-width="1.2"/>
+      <path d="M5 7.5h6M5 5h4M5 10h3" stroke="#2E7D55" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>
+    This case includes a downloadable Excel workbook - data model, calculations, and dashboard.
+  </div>
+  <a href="Pharma_Case3_Market_Access.xlsx" download class="download-btn">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <path d="M6.5 1v8M3.5 6.5l3 3 3-3M1 11h11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Download Excel Working File
+  </a>
+</div>
+
+<div class="content">
+
+  <div class="section">
+    <div class="section-marker">Context</div>
+    <h2>Why this problem matters</h2>
+    <p>
+      Launching a specialty pharmaceutical product in Europe is not a single decision - it is a sequence of interlocking country decisions, each of which creates constraints on what is possible in the next market. Germany has no formal price control at launch but requires a health technology assessment (HTA) within twelve months. France conducts a full HTA before reimbursement is granted, with price negotiated afterward. The Netherlands uses a conditional reimbursement framework with mandatory outcome-based agreements for high-cost drugs. Each system values evidence differently, each negotiates price through different channels, and each feeds into an international reference pricing (IRP) network that links prices across 26 European markets.
+    </p>
+    <p>
+      For a company launching a specialty drug - one with a high list price justified by a small patient population and a significant clinical benefit claim - the market access sequencing decision is as commercially consequential as the clinical dossier itself. Launch too early in France, accept too low a price to achieve reimbursement, and that price becomes the reference floor for Austria, Belgium, and twelve other markets. Launch too late in Germany, and a full year of revenue at the uncapped German price is foregone.
+    </p>
+    <p>
+      This case examines the situation facing a specialty oncology product's market access team eighteen months before a planned launch. The clinical dossier was complete, but the commercial risk was unresolved: country HTA strategies had not been mapped against each other, and the pricing scenarios had not been stress-tested against the IRP cascade.
+    </p>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">Data Foundation</div>
+    <h2>Data sources and their role in this analysis</h2>
+
+    <table class="source-table">
+      <thead>
+        <tr><th>Source</th><th>What it provided</th><th>Used for</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="source-name">AMNOG / G-BA Benefit Assessment Reports (Germany)</div>
+            <div class="source-limit">Public summaries only. Full dossier assessments require GKV-Spitzenverband access for commercial detail.</div>
+          </td>
+          <td>Outcome of benefit assessments for 80+ oncology products under AMNOG. Benefit rating categories and subsequent AMNOG price negotiation outcomes.</td>
+          <td>Benchmarking expected benefit rating for the product. Discount range modelling from list to negotiated AMNOG price.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">HAS Transparency Commission Opinions (France)</div>
+            <div class="source-limit">Published in French. SMR/ASMR ratings available publicly; confidential price agreements are not disclosed.</div>
+          </td>
+          <td>SMR (medical benefit) and ASMR (added therapeutic value) ratings for comparable oncology products. CEPS price negotiation timelines.</td>
+          <td>France HTA outcome modelling. ASMR rating scenarios and expected time-to-reimbursement.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">Zorginstituut Nederland - Beoordeling Reports (Netherlands)</div>
+            <div class="source-limit">Detailed for conditionally reimbursed drugs; earlier-stage assessments are less detailed.</div>
+          </td>
+          <td>Pakketadvies assessments and conditional reimbursement agreements for high-cost oncology drugs. Managed entry agreement structures.</td>
+          <td>NL conditional reimbursement modelling. Outcome-based agreement design reference cases.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">EURIPID International Reference Pricing Database</div>
+            <div class="source-limit">Lag of 3–6 months for some markets. Prices are list; net prices (after rebates) are not publicly available.</div>
+          </td>
+          <td>Reference price lists for 26 European markets. Reference country weighting methodologies by market.</td>
+          <td>IRP cascade modelling - impact of DE/FR/NL net prices on Austria, Belgium, Spain, and other reference markets.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">IQVIA MIDAS / Therapy Area Analogue Analysis</div>
+            <div class="source-limit">Aggregated commercial data. Analogue selection requires clinical judgment - imperfect comparability is inherent.</div>
+          </td>
+          <td>Revenue trajectories and market uptake curves for eight comparable specialty oncology launches in DE/FR/NL 2019–2023.</td>
+          <td>Market penetration assumptions and peak share modelling for the revenue scenarios.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">The Situation</div>
+    <h2>What the market access team was facing</h2>
+    <p>
+      The product - a specialty oncology agent targeting a validated biomarker present in approximately 8% of a specific solid tumour population - had received a positive CHMP opinion from the EMA. A European launch was planned within 18 months. Germany, France, and the Netherlands were identified as the priority launch markets, accounting for an estimated 58% of addressable European patient volume and anchoring the IRP reference basket for the remaining 23 European markets.
+    </p>
+
+    <div class="pull">
+      "The clinical team had modelled the trial. The commercial team had modelled peak sales. Nobody had modelled what happens to the price if France grants ASMR III and Austria references it before Germany negotiates."
+    </div>
+
+    <p>
+      Three planning gaps were identified at the outset. First, the HTA benefit assessments for each country had been developed in functional silos - the German medical team had built the AMNOG dossier strategy, the French regulatory team had mapped the HAS submission, and the Netherlands access team was designing the managed entry agreement - but no one had mapped the three country strategies against each other for consistency and sequencing risk.
+    </p>
+    <p>
+      Second, the revenue model used a single price assumption across all European markets, treating the IRP cascade as a risk footnote rather than a modelling input. Third, the launch sequence - Germany first, then France and Netherlands simultaneously - had been chosen for operational reasons without explicit analysis of what each sequencing option would do to the price corridor in reference markets.
+    </p>
+
+    <table class="data-table">
+      <thead>
+        <tr><th>Market</th><th>HTA Framework</th><th>Price Control Mechanism</th><th>IRP Weight</th><th>Time-to-Reimbursement</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="badge b-de">Germany</span></td><td>AMNOG - G-BA benefit assessment</td><td>Free pricing at launch; negotiated AMNOG rebate after 12 months</td><td class="mono">High (referenced by 14 mkts)</td><td class="mono">12–18 months to AMNOG price</td></tr>
+        <tr><td><span class="badge b-fr">France</span></td><td>HAS - SMR/ASMR rating</td><td>CEPS price negotiation before reimbursement; ATU may apply</td><td class="mono">High (referenced by 12 mkts)</td><td class="mono">18–24 months to reimbursement</td></tr>
+        <tr><td><span class="badge b-nl">Netherlands</span></td><td>ZIN - Pakketadvies</td><td>Conditional reimbursement; outcome-based managed entry</td><td class="mono">Medium (referenced by 6 mkts)</td><td class="mono">24–36 months conditional</td></tr>
+      </tbody>
+    </table>
+    <p class="footnote">IRP weight reflects the number of European markets that include the country in their reference basket, based on EURIPID data. German list price has the highest IRP weight; French net price (when disclosed) is also widely referenced.</p>
+
+    <div class="kpi-strip">
+      <div class="kpi">
+        <div class="kpi-label">Proposed List Price</div>
+        <div class="kpi-val blue">€85,000</div>
+        <div class="kpi-desc">Per patient per year. Pre-negotiation. Subject to AMNOG and CEPS adjustment.</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">IRP Exposure</div>
+        <div class="kpi-val amber">26 markets</div>
+        <div class="kpi-desc">Reference the DE or FR price in their national reimbursement calculations</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Eligible Patient Pool (EU)</div>
+        <div class="kpi-val blue">~14,200</div>
+        <div class="kpi-desc">Biomarker-positive patients in addressable EU therapy area annually</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Price Corridor at Risk</div>
+        <div class="kpi-val red">±€28,000</div>
+        <div class="kpi-desc">Range between best and worst case net price across DE/FR/NL scenarios</div>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">Analysis · Step 1</div>
+    <h2>Mapping the HTA landscape - what each country will actually assess</h2>
+    <p>
+      The three HTA frameworks differ not just in process but in what they consider evidence of value. Germany's G-BA assesses whether there is added benefit over the appropriate comparator - a binary-ish question that determines the negotiating mandate the GKV-Spitzenverband takes into AMNOG discussions. France's HAS assesses both medical benefit (SMR) and therapeutic added value (ASMR, rated I–V), where the ASMR rating directly determines the price corridor CEPS will accept. The Netherlands' Zorginstituut assesses cost-effectiveness and conditions reimbursement on outcome agreements.
+    </p>
+    <p>
+      For this product, the core clinical evidence - a randomised Phase III trial showing a 38% improvement in progression-free survival over second-line standard of care, with overall survival data not yet mature - lands differently in each framework. In Germany, immature OS data against the G-BA comparator creates benefit rating risk. In France, PFS as the primary endpoint creates an ASMR III or IV outcome risk rather than ASMR I or II. In the Netherlands, the absence of a mature cost-effectiveness model creates a requirement for a managed entry agreement.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">HTA Benefit Assessment Outcome Scenarios by Country</div>
+          <div class="chart-sub">Probability-weighted rating outcomes based on comparable oncology product precedents</div>
+        </div>
+        <div class="chart-num">Chart 1 of 4</div>
+      </div>
+      <div style="height:320px; position:relative"><canvas id="chart1"></canvas></div>
+      <div class="legend">
+        <div class="legend-item"><div class="leg-box" style="background:#2E7D55"></div>Optimistic outcome</div>
+        <div class="legend-item"><div class="leg-box" style="background:#C07A1A"></div>Base case outcome</div>
+        <div class="legend-item"><div class="leg-box" style="background:#C0392B"></div>Conservative outcome</div>
+      </div>
+    </div>
+
+    <div class="finding">
+      <strong>The base case is not the same as the optimistic case in any of the three markets</strong>
+      Germany's base case is a "minor added benefit" rating (Anhaltspunkt für geringen Zusatznutzen) - which, based on AMNOG precedents for PFS-based oncology claims, produces a negotiated AMNOG rebate of 35–45% off list. An optimistic "considerable benefit" rating would reduce the rebate to 15–25%. France's base case is ASMR III (moderate improvement), which produces a price at parity with or slightly above the leading comparator. The ASMR IV (minor improvement) risk is non-trivial given immature OS data. Each rating scenario feeds a different net price, and those net prices feed the IRP cascade.
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">Analysis · Step 2</div>
+    <h2>What does competitive benchmarking show about achievable price?</h2>
+    <p>
+      Before building the IRP cascade, the range of achievable net prices in each market was estimated using analogue analysis from eight comparable oncology launches between 2019 and 2023. Analogue selection used four criteria: therapy-area adjacency, PFS primary endpoint, immature OS at launch, and similar eligible patient population. Each analogue was mapped to HTA outcome and net price to create the scenario inputs.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">Achieved Net Price Range by Market and HTA Outcome - Oncology Analogues (2019–2023)</div>
+          <div class="chart-sub">Net price per patient per year after rebates. List price: €85,000. Eight analogue products.</div>
+        </div>
+        <div class="chart-num">Chart 2 of 4</div>
+      </div>
+      <div style="height:320px; position:relative"><canvas id="chart2"></canvas></div>
+      <div class="legend">
+        <div class="legend-item"><div class="leg-box" style="background:#1C3F6E"></div>Germany (AMNOG)</div>
+        <div class="legend-item"><div class="leg-box" style="background:#C0392B"></div>France (CEPS)</div>
+        <div class="legend-item"><div class="leg-box" style="background:#C07A1A"></div>Netherlands (ZIN)</div>
+      </div>
+    </div>
+
+    <div class="alert">
+      <strong>France creates the binding price floor risk</strong>
+      Under ASMR IV conditions in France, comparable products have achieved net prices of €47,000–€55,000 per patient per year - a 35–44% reduction from the proposed €85,000 list price. France is referenced in twelve European IRP baskets. An ASMR IV outcome in France, if the net price is disclosed or inferred, would pull the price corridor down for Austria, Belgium, Czech Republic, Spain, and others before Germany's AMNOG negotiation is complete. The sequencing of France before Germany's AMNOG negotiation conclusion is the highest-risk scenario.
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">Analysis · Step 3</div>
+    <h2>IRP cascade - what does each scenario do to the European price corridor?</h2>
+    <p>
+      International reference pricing means that the price accepted in one market propagates to others through a defined reference basket. The cascade model built here traces three scenarios - optimistic HTA outcomes, base case, and conservative - through the 26-market IRP network, estimating the effective net revenue per patient in each market given the reference price each would apply.
+    </p>
+    <p>
+      The model uses the EURIPID reference basket weighting for each European market. Where confidential net prices are relevant (Germany post-AMNOG, France post-CEPS), a disclosure assumption is applied: Germany's net AMNOG prices are confidential but frequently estimated within a ±10% range; France's CEPS net prices are partially disclosed under transparency regulations.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">European Revenue per Patient - Three Launch Scenarios across 26 Markets</div>
+          <div class="chart-sub">Indexed to proposed list price (€85,000 = 100). IRP cascade applied from DE/FR/NL anchor prices.</div>
+        </div>
+        <div class="chart-num">Chart 3 of 4</div>
+      </div>
+      <div style="height:340px; position:relative"><canvas id="chart3"></canvas></div>
+      <div class="legend">
+        <div class="legend-item"><div class="leg-box" style="background:#2E7D55"></div>Optimistic (best HTA, DE first)</div>
+        <div class="legend-item"><div class="leg-box" style="background:#1C3F6E"></div>Base Case (minor benefit DE, ASMR III FR)</div>
+        <div class="legend-item"><div class="leg-box" style="background:#C0392B"></div>Conservative (minor benefit DE, ASMR IV FR)</div>
+      </div>
+    </div>
+
+    <div class="finding">
+      <strong>The base-to-conservative scenario gap is €28,000 per patient per year across the European portfolio</strong>
+      At the optimistic end, the European average net revenue per patient, weighted by patient volume across the 26 markets, is approximately €69,000. Under the conservative scenario, it falls to €41,000. At 14,200 addressable EU patients per year at peak penetration, this represents a €400M differential in peak annual EU revenue. The scenario gap is not driven by Germany or France in isolation. It is the cascade effect of an ASMR IV French price becoming the binding reference for twelve other markets before Germany's higher AMNOG-adjusted price can establish a competing reference.
+    </div>
+
+    <table class="data-table" style="margin-top:24px">
+      <thead>
+        <tr><th>Scenario Driver</th><th>Price Impact</th><th>Patient Volume Exposure</th><th>Revenue Risk</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>French ASMR IV outcome</td><td class="mono">€47k-€55k net price</td><td>12 reference markets</td><td class="mono">High</td></tr>
+        <tr><td>German minor benefit rating</td><td class="mono">35-45% rebate</td><td>14 reference markets</td><td class="mono">High</td></tr>
+        <tr><td>NL managed entry rebate</td><td class="mono">Conditional discount</td><td>6 reference markets</td><td class="mono">Medium</td></tr>
+        <tr><td>Delay until mature OS data</td><td class="mono">Potentially stronger HTA</td><td>Lost launch year</td><td class="mono">Trade-off</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">Analysis · Step 4</div>
+    <h2>Scenario modelling - peak revenue under each launch sequence</h2>
+    <p>
+      The fourth step combined the price scenarios with market penetration assumptions to model peak annual EU revenue under four launch sequence options: Germany first (current plan), France first, Netherlands first, and simultaneous DE/FR/NL. Penetration curves used IQVIA analogue data. AMNOG, CEPS, and ZIN timelines were applied from published precedents.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">5-Year Cumulative EU Revenue - Launch Sequence × HTA Outcome Scenarios (€M)</div>
+          <div class="chart-sub">Base case HTA outcomes applied to each sequence. Market penetration from analogue model.</div>
+        </div>
+        <div class="chart-num">Chart 4 of 4</div>
+      </div>
+      <div style="height:320px; position:relative"><canvas id="chart4"></canvas></div>
+      <div class="legend">
+        <div class="legend-item"><div class="leg-box" style="background:#1C3F6E"></div>Optimistic HTA</div>
+        <div class="legend-item"><div class="leg-box" style="background:#C07A1A"></div>Base Case HTA</div>
+        <div class="legend-item"><div class="leg-box" style="background:#C0392B"></div>Conservative HTA</div>
+      </div>
+    </div>
+
+    <div class="kpi-strip">
+      <div class="kpi">
+        <div class="kpi-label">Best Sequence (Base Case)</div>
+        <div class="kpi-val green">DE First</div>
+        <div class="kpi-desc">€1.84Bn 5-yr revenue. Captures German free-price period; establishes higher IRP anchor before FR.</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Worst Sequence (Base Case)</div>
+        <div class="kpi-val red">FR First</div>
+        <div class="kpi-desc">€1.21Bn 5-yr. CEPS price locks IRP cascade before DE price established.</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">5-yr Revenue Difference</div>
+        <div class="kpi-val red">€630M</div>
+        <div class="kpi-desc">Between best and worst sequence in base case. Sequence choice is a commercial decision.</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Break-Even Threshold</div>
+        <div class="kpi-val amber">ASMR III</div>
+        <div class="kpi-desc">Minimum French HTA outcome for the DE-first plan to meet the hurdle rate on EU investment.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">Recommendations</div>
+    <h2>What the analysis points to</h2>
+    <p>
+      Recommendations are prioritised by price-anchor risk, not by launch convenience. The objective is to protect the European price corridor first, then manage country-level reimbursement access.
+    </p>
+
+    <div class="rec-list">
+      <div class="rec">
+        <div class="rec-n">1</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-urgent">Immediate</span>
+          <h4 class="urgent">Confirm Germany-first launch sequence - do not file simultaneously in France</h4>
+          <p>The scenario analysis shows a €630M five-year revenue difference between the Germany-first and France-first sequences under base case HTA assumptions. The current operational plan - simultaneous DE/FR submission - sits in the middle but sacrifices the German free-pricing period unnecessarily. Filing in Germany first, allowing the German list price to establish as an IRP reference in the twelve months before the AMNOG negotiation concludes, gives the company its best chance of a defensible European price corridor. The France submission timeline should be moved to follow German regulatory filing by a minimum of six months.</p><p>Expected impact: protect up to €630M in 5-year cumulative revenue versus the France-first base-case sequence.</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="rec-n">2</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-urgent">Immediate</span>
+          <h4 class="urgent">Stress-test the French dossier for ASMR III - accept that ASMR IV is a real scenario</h4>
+          <p>The French medical team's current planning assumption is ASMR II (important improvement). Based on the precedent analysis of PFS-primary oncology submissions with immature OS data, ASMR II in France for this product profile is the optimistic scenario, not the base case. The market access strategy needs to be stress-tested against ASMR III as the base case and ASMR IV as the downside. If ASMR IV is realised, the IRP cascade consequences should inform whether to delay French submission until OS data matures, potentially two years, rather than accept a price that becomes the binding European floor.</p><p>Expected impact: avoid a downside price corridor that could reduce European net revenue by roughly €28k per patient per year.</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="rec-n">3</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-short">Short Term</span>
+          <h4>Design the Netherlands managed entry agreement as a data-generating mechanism, not a price concession</h4>
+          <p>The ZIN assessment will require a conditional reimbursement agreement. The standard approach is to negotiate a volume-based rebate. The better approach - and the one with precedent in recent Dutch oncology managed entry agreements - is to structure the outcome-based agreement around real-world OS data collection, with the rebate triggered only if OS benefit is not confirmed at a defined interim analysis. This converts the Dutch conditional reimbursement from a price reduction into a data collection mechanism that also strengthens the OS evidence base for future AMNOG re-assessment and French re-negotiation.</p><p>Expected impact: preserve access in the Netherlands while generating real-world evidence that can improve later price re-negotiation positions.</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="rec-n">4</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-ongoing">Ongoing</span>
+          <h4>Build a live IRP monitoring model - update quarterly as launch proceeds</h4>
+          <p>The IRP cascade is not a static risk that is managed once at launch. As more markets reference the anchor prices and as rebate agreements are disclosed or inferred by other payers, the effective net price in reference markets moves. A quarterly IRP monitoring model - tracking the disclosed or estimated prices in Germany, France, and the Netherlands and applying them through the 26-market reference basket - should become a standing market access deliverable. This also informs the timing of market entry decisions in the reference markets themselves, where delay may be commercially rational if the reference price environment is deteriorating.</p><p>Expected impact: prevent unmanaged reference-price leakage and provide quarterly management visibility on price corridor movement.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">Model Notes</div>
+    <h2>Assumptions and limitations</h2>
+    <p>
+      The model uses analogue-based assumptions for HTA outcomes and net prices. Actual outcomes depend on dossier quality, comparator choice, payer negotiation dynamics, and final clinical data maturity.
+    </p>
+    <p>
+      Net prices are estimated because many European rebates are confidential. The IRP cascade therefore represents a directional commercial risk model rather than a precise price forecast.
+    </p>
+    <p>
+      Patient pool and uptake assumptions are based on analogue launch curves and therapy-area prevalence. Actual uptake may be constrained by diagnostic testing rates, guideline adoption, and local reimbursement criteria.
+    </p>
+    <p>
+      The Germany-first recommendation protects price corridor value, but it may create access delays in other markets. The final decision should balance commercial value, patient access, and organisational readiness.
+    </p>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">References</div>
+    <h2>Full citations</h2>
+    <ul style="font-size:13.5px; color:var(--muted); line-height:2.2; padding-left:18px">
+      <li>Gemeinsamer Bundesausschuss (2023). <em>Nutzenbewertung nach §35a SGB V - Annual Report 2022</em>. Berlin: G-BA.</li>
+      <li>Haute Autorité de Santé (2023). <em>Rapport annuel 2022 - Évaluation des médicaments</em>. Saint-Denis: HAS.</li>
+      <li>Zorginstituut Nederland (2023). <em>Pakketbeheer in de praktijk 2022 - Oncologie</em>. Diemen: ZIN.</li>
+      <li>EURIPID Collaboration (2023). <em>European Pharmaceutical Pricing and Reimbursement Information Database - Reference Pricing Overview</em>. Vienna: EURIPID.</li>
+      <li>Vogler S, et al. (2023). "International reference pricing: how do European countries use this policy instrument in practice?" <em>Journal of Pharmaceutical Policy and Practice</em>, 16(1):74.</li>
+      <li>IQVIA Institute (2023). <em>Global Oncology Trends 2023: Outlook to 2027</em>. Parsippany: IQVIA.</li>
+      <li>van den Ham H, et al. (2022). "Managed entry agreements for oncology drugs in the Netherlands." <em>Value in Health</em>, 25(4):548–555.</li>
+    </ul>
+  </div>
+
+</div>
+
+<footer>
+  <span>Business Analyst Portfolio · Pharma &amp; Life Sciences Case 03 of 04</span>
+  <a href="#">← Back to Portfolio</a>
+</footer>
+
+<script>
+Chart.defaults.font.family = "'Source Sans 3', sans-serif";
+Chart.defaults.color = '#555';
+
+// Chart 1 - HTA outcome probability by market
+(function(){
+  new Chart(document.getElementById('chart1'), {
+    type: 'bar',
+    data: {
+      labels: ['Germany\n(AMNOG)', 'France\n(HAS)', 'Netherlands\n(ZIN)'],
+      datasets: [
+        { label: 'Optimistic', data: [30, 20, 35], backgroundColor: '#2E7D55', borderRadius: 2 },
+        { label: 'Base Case', data: [45, 50, 45], backgroundColor: '#C07A1A', borderRadius: 2 },
+        { label: 'Conservative', data: [25, 30, 20], backgroundColor: '#C0392B', borderRadius: 2 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw}%` } } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { max: 100, title: { display: true, text: 'Probability (%)' }, grid: { color: '#eee' }, ticks: { callback: v => v + '%' } }
+      }
+    }
+  });
+})();
+
+// Chart 2 - Net price range by market and HTA outcome
+(function(){
+  new Chart(document.getElementById('chart2'), {
+    type: 'bar',
+    data: {
+      labels: ['Optimistic', 'Base Case', 'Conservative'],
+      datasets: [
+        { label: 'Germany (AMNOG)', data: [72000, 55000, 44000], backgroundColor: '#1C3F6E', borderRadius: 2 },
+        { label: 'France (CEPS)', data: [68000, 58000, 49000], backgroundColor: '#C0392B', borderRadius: 2 },
+        { label: 'Netherlands (ZIN)', data: [65000, 54000, 46000], backgroundColor: '#C07A1A', borderRadius: 2 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: €${(ctx.raw/1000).toFixed(0)}k` } } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { title: { display: true, text: 'Net Price per Patient per Year (€)' }, grid: { color: '#eee' },
+             ticks: { callback: v => '€' + (v/1000) + 'k' }, min: 30000, max: 90000 }
+      }
+    }
+  });
+})();
+
+// Chart 3 - IRP cascade: revenue per patient indexed to list price
+(function(){
+  const markets = ['DE','FR','NL','AT','BE','ES','PT','PL','CZ','HU','SE','DK','FI','NO','IT','CH','IE','GR','RO','BG','HR','SI','SK','LT','LV','EE'];
+  const optimistic = [85,80,76,78,74,72,68,55,60,52,79,81,77,83,75,88,73,62,48,45,50,54,58,47,46,44];
+  const baseCase =   [65,60,57,58,55,52,49,40,44,38,61,63,59,65,56,68,55,46,35,32,36,40,43,35,33,32];
+  const conservative= [50,46,44,44,42,40,37,30,33,29,47,49,46,51,43,53,42,35,26,24,27,31,33,26,25,24];
+  new Chart(document.getElementById('chart3'), {
+    type: 'line',
+    data: {
+      labels: markets,
+      datasets: [
+        { label: 'Optimistic', data: optimistic, borderColor: '#2E7D55', backgroundColor: '#2E7D5515', tension: 0.2, borderWidth: 2, pointRadius: 3 },
+        { label: 'Base Case', data: baseCase, borderColor: '#1C3F6E', backgroundColor: '#1C3F6E10', tension: 0.2, borderWidth: 2, pointRadius: 3 },
+        { label: 'Conservative', data: conservative, borderColor: '#C0392B', backgroundColor: '#C0392B10', tension: 0.2, borderWidth: 2, pointRadius: 3 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { mode: 'index' } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+        y: { title: { display: true, text: 'Net Revenue per Patient (€k)' }, grid: { color: '#eee' }, ticks: { callback: v => '€' + v + 'k' } }
+      }
+    }
+  });
+})();
+
+// Chart 4 - 5-year cumulative revenue by launch sequence and HTA scenario
+(function(){
+  new Chart(document.getElementById('chart4'), {
+    type: 'bar',
+    data: {
+      labels: ['DE First', 'Simultaneous\nDE+FR+NL', 'NL First', 'FR First'],
+      datasets: [
+        { label: 'Optimistic', data: [2420, 2180, 1980, 1560], backgroundColor: '#1C3F6E', borderRadius: 2 },
+        { label: 'Base Case', data: [1840, 1650, 1480, 1210], backgroundColor: '#C07A1A', borderRadius: 2 },
+        { label: 'Conservative', data: [1120, 980, 870, 690], backgroundColor: '#C0392B', borderRadius: 2 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { mode: 'index', callbacks: { label: ctx => `${ctx.dataset.label}: €${ctx.raw}M` } } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { title: { display: true, text: '5-Year Cumulative Revenue (€M)' }, grid: { color: '#eee' } }
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>

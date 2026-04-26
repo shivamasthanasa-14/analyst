@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shivam Asthana — Portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Source+Sans+3:wght@300;400;500;600&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #FBFAF7;
+    --surface:   #FFFFFF;
+    --surface2:  #F4F1EA;
+    --border:    #E7E1D8;
+    --border2:   #D1C8BA;
+    --text:      #2A2A2A;
+    --muted:     #69645D;
+    --faint:     #A19A90;
+    --accent:    #245B8F;
+    --accent2:   #4B7F68;
+    --red:       #C96A5F;
+    --amber:     #C9923C;
+    --ink:       #ECE7DF;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Source Sans 3', sans-serif;
+    font-weight: 300;
+    line-height: 1.75;
+    font-size: 16px;
+    overflow-x: hidden;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(251,250,247,0.94);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 56px;
+    height: 56px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px; font-weight: 500;
+    color: var(--text); text-decoration: none;
+    letter-spacing: -0.01em;
+  }
+  .nav-links {
+    display: flex; align-items: center; gap: 32px;
+    list-style: none;
+  }
+  .nav-links a {
+    font-size: 13px; font-weight: 400;
+    color: var(--muted); text-decoration: none;
+    letter-spacing: 0.02em;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    justify-content: center;
+    padding: 120px 56px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Subtle grid background */
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 64px 64px;
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  /* Accent line top-left */
+  .hero::after {
+    content: '';
+    position: absolute; top: 56px; left: 0;
+    width: 4px; height: 180px;
+    background: linear-gradient(180deg, var(--accent), var(--accent2));
+    opacity: 0.85;
+  }
+
+  .hero-inner {
+    max-width: 900px;
+    position: relative; z-index: 1;
+  }
+
+  .hero-eyebrow {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 11px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--accent);
+    margin-bottom: 24px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .hero-eyebrow::before {
+    content: '';
+    display: block; width: 32px; height: 1px;
+    background: var(--accent);
+  }
+
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(42px, 6vw, 72px);
+    line-height: 1.08;
+    font-weight: 400;
+    letter-spacing: -0.03em;
+    margin-bottom: 28px;
+    color: var(--text);
+  }
+  .hero-title em {
+    font-style: italic;
+    color: var(--accent);
+    background: linear-gradient(180deg, transparent 62%, rgba(36, 91, 143, 0.12) 62%);
+  }
+  .hero-title .line2 {
+    display: block;
+    padding-left: 80px;
+  }
+
+  .hero-sub {
+    font-size: 18px;
+    color: var(--muted);
+    font-weight: 300;
+    max-width: 560px;
+    margin-bottom: 48px;
+    line-height: 1.65;
+  }
+
+  .hero-cta {
+    display: flex; gap: 16px; flex-wrap: wrap;
+  }
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--accent);
+    color: #fff; text-decoration: none;
+    font-size: 13px; font-weight: 500;
+    padding: 12px 24px;
+    border-radius: 2px;
+    letter-spacing: 0.03em;
+    transition: background 0.2s, transform 0.2s;
+  }
+  .btn-primary:hover { background: #1D4974; transform: translateY(-1px); }
+  .btn-outline {
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 1px solid var(--border2);
+    color: var(--text); text-decoration: none;
+    font-size: 13px; font-weight: 400;
+    padding: 12px 24px;
+    border-radius: 2px;
+    letter-spacing: 0.03em;
+    transition: border-color 0.2s, color 0.2s, transform 0.2s;
+  }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+
+
+  .capability-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    max-width: 960px;
+    margin-top: 36px;
+    border: 1px solid var(--border);
+    background: var(--border);
+  }
+  .capability-item {
+    background: rgba(255,255,255,0.72);
+    padding: 18px 20px;
+  }
+  .capability-kicker {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin-bottom: 6px;
+  }
+  .capability-label {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.45;
+    font-weight: 400;
+  }
+
+  /* ── SECTION WRAPPER ── */
+  .section {
+    padding: 96px 56px;
+  }
+  .section-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .section-header {
+    display: flex; align-items: baseline;
+    gap: 20px; margin-bottom: 56px;
+  }
+  .section-num {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 11px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--faint);
+  }
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px; font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+  .section-line {
+    display: none;
+  }
+
+  /* ── ABOUT ── */
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: start;
+  }
+
+  .about-bio h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px; font-weight: 400;
+    margin-bottom: 16px;
+    letter-spacing: -0.01em;
+  }
+  .about-bio p {
+    font-size: 15px;
+    color: #3a3a3a;
+    line-height: 1.8;
+    margin-bottom: 16px;
+  }
+  .about-bio p:last-child { margin-bottom: 0; }
+
+  .about-right { display: flex; flex-direction: column; gap: 32px; }
+
+  .portfolio-explainer {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 24px;
+    border-radius: 0 3px 3px 0;
+  }
+  .portfolio-explainer h4 {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 10px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--accent);
+    margin-bottom: 10px;
+  }
+  .portfolio-explainer p {
+    font-size: 14px; color: var(--muted);
+    line-height: 1.7;
+  }
+
+  .skills-block h4 {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 10px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--faint);
+    margin-bottom: 14px;
+  }
+  .skills-grid {
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .skill-tag {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 11px;
+    padding: 5px 12px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--muted);
+    background: var(--surface);
+    letter-spacing: 0.04em;
+  }
+
+  .contact-block h4 {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 10px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--faint);
+    margin-bottom: 14px;
+  }
+  .contact-links {
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .contact-link {
+    display: flex; align-items: center; gap: 10px;
+    color: var(--muted); text-decoration: none;
+    font-size: 13px;
+    transition: color 0.2s;
+  }
+  .contact-link:hover { color: var(--accent); }
+  .contact-link svg { flex-shrink: 0; }
+
+  /* ── SECTORS ── */
+  .sectors-bg {
+    background: var(--surface2);
+  }
+  .sectors-bg .section-title { color: var(--text); }
+  .sectors-bg .section-num { color: var(--faint); }
+  .sectors-bg .section-line { display: none; }
+
+  .sectors-intro {
+    font-size: 15px; color: var(--muted);
+    max-width: 680px;
+    margin-bottom: 56px;
+    line-height: 1.75;
+  }
+
+  .sectors-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+  }
+
+  .sector-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 40px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s, background 0.25s;
+    text-decoration: none;
+    display: block;
+    border-radius: 4px;
+  }
+  .sector-card:hover {
+    background: #FFFEFC;
+    border-color: var(--border2);
+    box-shadow: 0 16px 40px rgba(69, 57, 38, 0.08);
+    transform: translateY(-2px);
+  }
+  .sector-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: linear-gradient(180deg, var(--accent), var(--accent2));
+    opacity: 0.28;
+    transition: opacity 0.25s ease;
+  }
+  .sector-card:hover::before { opacity: 0.85; }
+
+  .sector-num {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 10px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--faint);
+    margin-bottom: 16px;
+  }
+  .sector-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px; font-weight: 400;
+    color: var(--text);
+    margin-bottom: 10px;
+    letter-spacing: -0.01em;
+  }
+  .sector-desc {
+    font-size: 13px; color: var(--muted);
+    line-height: 1.65;
+    margin-bottom: 28px;
+  }
+
+  .sector-cases {
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .sector-case {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 12px; color: var(--muted);
+    text-decoration: none;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    background: #FBFAF7;
+    border-radius: 3px;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+  }
+  .sector-case:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: #FFFFFF;
+  }
+  .sector-case .case-arrow {
+    margin-left: auto;
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity 0.2s, transform 0.2s;
+    color: var(--accent);
+    font-size: 14px;
+  }
+  .sector-case:hover .case-arrow {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .case-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .sector-tag {
+    display: inline-block;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 9px; letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 2px;
+    margin-bottom: 16px;
+  }
+  .tag-live { background: #EAF3EE; color: var(--accent2); border: 1px solid #CFE2D7; }
+  .tag-coming { background: #F0EDE7; color: var(--faint); border: 1px solid var(--border); }
+
+  /* ── APPROACH ── */
+  .approach-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+  }
+  .approach-card {
+    padding: 32px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    position: relative;
+  }
+  .approach-card::before {
+    content: attr(data-num);
+    font-family: 'Playfair Display', serif;
+    font-size: 64px; font-weight: 400;
+    color: var(--border);
+    position: absolute; top: 16px; right: 20px;
+    line-height: 1;
+    pointer-events: none;
+  }
+  .approach-card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px; font-weight: 400;
+    margin-bottom: 10px;
+  }
+  .approach-card p {
+    font-size: 14px; color: var(--muted);
+    line-height: 1.7;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--surface2);
+    border-top: 1px solid var(--border);
+    padding: 40px 56px;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 16px;
+  }
+  .footer-left {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px; color: var(--text);
+  }
+  .footer-right {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 11px; color: var(--faint);
+    letter-spacing: 0.06em;
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .fade-up {
+    animation: fadeUp 0.7s ease forwards;
+  }
+  .fade-up-1 { animation-delay: 0.1s; opacity: 0; }
+  .fade-up-2 { animation-delay: 0.25s; opacity: 0; }
+  .fade-up-3 { animation-delay: 0.4s; opacity: 0; }
+  .fade-up-4 { animation-delay: 0.55s; opacity: 0; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    nav { padding: 0 24px; }
+    .hero { padding: 100px 24px 60px; }
+    .capability-strip { grid-template-columns: 1fr 1fr; }
+    .hero-title .line2 { padding-left: 0; }
+    .section { padding: 64px 24px; }
+    .about-grid { grid-template-columns: 1fr; gap: 40px; }
+    .sectors-grid { grid-template-columns: 1fr; }
+    .approach-grid { grid-template-columns: 1fr; }
+    footer { padding: 32px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">Shivam Asthana</a>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#work">Work</a></li>
+    <li><a href="#approach">Approach</a></li>
+    <li><a href="mailto:shivmasthana.sa@gmail.com">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow fade-up fade-up-1">A focused portfolio</div>
+    <h1 class="hero-title fade-up fade-up-2">
+      Turning messy business problems
+      <span class="line2">into <em>clear decisions.</em></span>
+    </h1>
+    <p class="hero-sub fade-up fade-up-3">
+      Selected case work showing how I frame ambiguous questions, structure analysis, build decision logic, and communicate recommendations in a way business teams can act on.
+    </p>
+    <div class="hero-cta fade-up fade-up-4">
+      <a href="#work" class="btn-primary">
+        Explore Selected Work
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      <a href="#about" class="btn-outline">About & Background</a>
+    </div>
+
+    <div class="capability-strip fade-up fade-up-4">
+      <div class="capability-item">
+        <div class="capability-kicker">01</div>
+        <div class="capability-label">Problem framing and decision context</div>
+      </div>
+      <div class="capability-item">
+        <div class="capability-kicker">02</div>
+        <div class="capability-label">KPI logic, modelling and dashboards</div>
+      </div>
+      <div class="capability-item">
+        <div class="capability-kicker">03</div>
+        <div class="capability-label">Process mapping and root-cause thinking</div>
+      </div>
+      <div class="capability-item">
+        <div class="capability-kicker">04</div>
+        <div class="capability-label">Stakeholder-ready recommendations</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ABOUT -->
+<section class="section" id="about">
+  <div class="section-inner">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2 class="section-title">About</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="about-grid">
+      <div class="about-bio">
+        <h3>Background</h3>
+        <p>
+          I am an MBA graduate from the University of Mannheim with experience across consulting, programme operations, digital workflows, and data-led decision support. My work has involved translating complex operational problems into structured models, dashboards, requirements, and management-ready recommendations.
+        </p>
+        <p>
+          This portfolio brings that way of working into selected business cases. The focus is not on volume, but on showing how I think: clarifying the problem, identifying what needs to be measured, separating symptoms from root causes, and turning analysis into practical next steps.
+        </p>
+        <p>
+          I am currently based in Germany and open to roles where business analysis, data interpretation, process improvement, and stakeholder communication sit close together.
+        </p>
+      </div>
+
+      <div class="about-right">
+        <div class="portfolio-explainer">
+          <h4>What this shows</h4>
+          <p>
+            Each case is designed to show the complete analytical path: from an unclear business question to a structured issue tree, a working model, key findings, and a recommendation. It is meant to make my thinking visible, not just display final charts.
+          </p>
+        </div>
+
+        <div class="skills-block">
+          <h4>Tools & Skills</h4>
+          <div class="skills-grid">
+            <span class="skill-tag">Python</span>
+            <span class="skill-tag">Excel</span>
+            <span class="skill-tag">Power BI</span>
+            <span class="skill-tag">SQL (basics)</span>
+            <span class="skill-tag">Chart.js</span>
+            <span class="skill-tag">Process Mapping</span>
+            <span class="skill-tag">Root Cause Analysis</span>
+            <span class="skill-tag">KPI Framework Design</span>
+            <span class="skill-tag">Scenario Modelling</span>
+            <span class="skill-tag">Stakeholder Management</span>
+            <span class="skill-tag">Agile / Jira</span>
+            <span class="skill-tag">Data Visualisation</span>
+          </div>
+        </div>
+
+        <div class="contact-block">
+          <h4>Contact</h4>
+          <div class="contact-links">
+            <a href="mailto:shivmasthana.sa@gmail.com" class="contact-link">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M1 5l7 5 7-5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+              shivmasthana.sa@gmail.com
+            </a>
+            <a href="https://linkedin.com/in/shivam-asthana" target="_blank" class="contact-link">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.2"/><path d="M4 6.5v5M4 4v.5M7 11.5V9a2 2 0 014 0v2.5M7 6.5v5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+              linkedin.com/in/shivam-asthana
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- CASE STUDIES -->
+<section class="section sectors-bg" id="work">
+  <div class="section-inner">
+    <div class="section-header">
+      <span class="section-num" >02</span>
+      <h2 class="section-title">Selected Work</h2>
+      <div class="section-line" ></div>
+    </div>
+
+    <p class="sectors-intro">
+      Two sector lenses are currently included. Each one is built to demonstrate practical analytical judgement: defining the business problem, choosing the right variables, interpreting patterns, and translating the result into decision-ready outputs.
+    </p>
+
+    <div class="sectors-grid">
+
+      <!-- ENERGY -->
+      <a class="sector-card" href="energy.html">
+        <div class="sector-num">Energy lens</div>
+        <span class="sector-tag tag-live">Selected cases</span>
+        <div class="sector-name">Energy & Utilities</div>
+        <div class="sector-desc">
+          Grid performance, heat transition decisions, customer churn and affordability segmentation, and renewable portfolio management across Germany, Netherlands, and Denmark.
+        </div>
+        <div class="sector-cases">
+          <span class="sector-case">
+            <span class="case-dot" style="background:#C0392B"></span>
+            Where Is the Grid Leaking Money?
+            <span class="case-arrow">→</span>
+          </span>
+          <span class="sector-case">
+            <span class="case-dot" style="background:#C07A1A"></span>
+            Heat or Heat Pump?
+            <span class="case-arrow">→</span>
+          </span>
+          <span class="sector-case">
+            <span class="case-dot" style="background:#2E7D55"></span>
+            Who Is About to Leave — and Why?
+            <span class="case-arrow">→</span>
+          </span>
+          <span class="sector-case">
+            <span class="case-dot" style="background:#1C3F6E"></span>
+            Building a Renewable Portfolio Dashboard
+            <span class="case-arrow">→</span>
+          </span>
+        </div>
+      </a>
+
+      <!-- PHARMA -->
+      <a class="sector-card" href="pharma.html">
+        <div class="sector-num">Pharma lens</div>
+        <span class="sector-tag tag-live">Selected cases</span>
+        <div class="sector-name">Pharma & Life Sciences</div>
+        <div class="sector-desc">
+          Batch failure root cause analysis, HCP engagement fragmentation, drug launch pricing and market access across European HTA frameworks, and supply chain stockout investigation.
+        </div>
+        <div class="sector-cases">
+          <span class="sector-case">
+            <span class="case-dot" style="background:#C0392B"></span>
+            Why Is This Batch Failing?
+            <span class="case-arrow">→</span>
+          </span>
+          <span class="sector-case">
+            <span class="case-dot" style="background:#C07A1A"></span>
+            Why Are We Losing HCPs?
+            <span class="case-arrow">→</span>
+          </span>
+          <span class="sector-case">
+            <span class="case-dot" style="background:#2E7D55"></span>
+            Can We Afford to Launch?
+            <span class="case-arrow">→</span>
+          </span>
+          <span class="sector-case">
+            <span class="case-dot" style="background:#1C3F6E"></span>
+            Fixing the Supply Chain
+            <span class="case-arrow">→</span>
+          </span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<!-- APPROACH -->
+<section class="section" id="approach">
+  <div class="section-inner">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2 class="section-title">How I work</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="approach-grid">
+      <div class="approach-card" data-num="1">
+        <h3>Frame the decision</h3>
+        <p>I start by clarifying the business question, the decision to be made, the constraints, and the stakeholders who need the answer. This keeps the work anchored in action, not just analysis.</p>
+      </div>
+      <div class="approach-card" data-num="2">
+        <h3>Build the logic</h3>
+        <p>I break the problem into drivers, assumptions, KPIs, process steps, and root causes. The goal is to create a model that is simple enough to explain and strong enough to support a recommendation.</p>
+      </div>
+      <div class="approach-card" data-num="3">
+        <h3>Make it usable</h3>
+        <p>I turn findings into clear outputs: a short storyline, decision options, trade-offs, and next steps. The final deliverable should help a stakeholder move forward with confidence.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">Shivam Asthana — Portfolio</div>
+  <div class="footer-right">Selected analytical work · 2025</div>
+</footer>
+
+</body>
+</html>

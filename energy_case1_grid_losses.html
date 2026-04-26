@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Where Is the Grid Leaking Money? - Distribution Network Performance Analysis</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Source+Sans+3:wght@300;400;500;600&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #FAFAF7;
+    --surface:  #FFFFFF;
+    --border:   #E8E6DF;
+    --border2:  #D0CEC6;
+    --text:     #181818;
+    --muted:    #6B6860;
+    --faint:    #9B9890;
+    --accent:   #1C3F6E;
+    --green:    #2E7D55;
+    --red:      #C0392B;
+    --amber:    #C07A1A;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Source Sans 3', sans-serif;
+    font-weight: 300;
+    line-height: 1.8;
+    font-size: 16px;
+  }
+
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(250,250,247,0.95);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 48px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-left { display: flex; align-items: center; gap: 10px; }
+  nav a { color: var(--muted); text-decoration: none; font-size: 13px; }
+  nav a:hover { color: var(--text); }
+  nav .sep { color: var(--border2); font-size: 12px; }
+  nav .current { color: var(--text); font-weight: 500; font-size: 13px; }
+  .nav-tag {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 10px; letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border: 1px solid var(--border2);
+    color: var(--muted); border-radius: 2px;
+  }
+
+  .hero {
+    max-width: 800px;
+    margin: 72px auto 0;
+    padding: 0 48px;
+  }
+
+  .case-label {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 11px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--accent);
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .case-label::after {
+    content: ''; display: block; flex: 1;
+    height: 1px; background: var(--border); max-width: 60px;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(30px, 4.5vw, 48px);
+    line-height: 1.15; font-weight: 400;
+    margin-bottom: 22px; letter-spacing: -0.02em;
+  }
+  h1 em { font-style: italic; color: var(--accent); }
+
+  .hero-deck {
+    font-size: 18px; color: var(--muted);
+    font-weight: 300; line-height: 1.6;
+    max-width: 640px; margin-bottom: 36px;
+  }
+
+  .meta-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    border: 1px solid var(--border);
+    border-radius: 3px; margin-bottom: 64px; overflow: hidden;
+  }
+  .meta-cell {
+    padding: 16px 20px;
+    border-right: 1px solid var(--border);
+  }
+  .meta-cell:last-child { border-right: none; }
+  .meta-cell label {
+    display: block;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 9px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--faint); margin-bottom: 4px;
+  }
+  .meta-cell span { font-size: 13px; font-weight: 500; }
+
+  .content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 48px 96px;
+  }
+
+  .section { margin-bottom: 72px; }
+
+  .section-marker {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 10px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--faint);
+    margin-bottom: 12px;
+  }
+
+  h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px; font-weight: 400;
+    line-height: 1.25; margin-bottom: 20px;
+    letter-spacing: -0.01em;
+  }
+
+  p { margin-bottom: 18px; color: #2e2e2e; font-size: 15.5px; }
+  p:last-child { margin-bottom: 0; }
+
+  .source-table {
+    width: 100%; border-collapse: collapse;
+    font-size: 13px; margin: 20px 0;
+  }
+  .source-table th {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 9px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--faint);
+    padding: 10px 14px;
+    border-bottom: 2px solid var(--border);
+    text-align: left; font-weight: 500;
+  }
+  .source-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top; line-height: 1.55;
+  }
+  .source-table tr:last-child td { border-bottom: none; }
+  .source-name { font-weight: 500; color: var(--accent); }
+  .source-limit { font-size: 12px; color: var(--muted); margin-top: 3px; font-style: italic; }
+
+  .data-table {
+    width: 100%; border-collapse: collapse;
+    font-size: 13px; margin: 20px 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px; overflow: hidden;
+  }
+  .data-table th {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 9px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--faint);
+    padding: 11px 14px;
+    border-bottom: 2px solid var(--border);
+    text-align: left; font-weight: 500;
+    background: #F5F4F0;
+  }
+  .data-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: #F9F8F5; }
+  .mono { font-family: 'Source Code Pro', monospace; font-size: 12px; }
+  .badge {
+    display: inline-block; padding: 2px 7px;
+    border-radius: 2px; font-size: 11px; font-weight: 500;
+  }
+  .r1  { background: #EBF0F8; color: #1C3F6E; }
+  .r2  { background: #FDF5E6; color: #C07A1A; }
+  .r3  { background: #EBF5EF; color: #2E7D55; }
+
+  .chart-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 28px 28px 20px;
+    margin: 24px 0;
+  }
+  .chart-title-row {
+    display: flex; justify-content: space-between;
+    align-items: flex-start; margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    gap: 16px; flex-wrap: wrap;
+  }
+  .chart-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px; font-weight: 400;
+  }
+  .chart-sub { font-size: 12px; color: var(--muted); font-style: italic; margin-top: 3px; }
+  .chart-num {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 10px; color: var(--faint); white-space: nowrap;
+  }
+
+  .legend {
+    display: flex; gap: 14px; flex-wrap: wrap;
+    font-size: 12px; margin-top: 14px; color: var(--muted);
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .leg-box { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; }
+
+  .finding {
+    border-left: 3px solid var(--accent);
+    background: #F0F4FA;
+    padding: 18px 22px;
+    border-radius: 0 3px 3px 0;
+    margin: 24px 0;
+    font-size: 14.5px; color: #1a2a3a; line-height: 1.7;
+  }
+  .finding strong {
+    display: block; font-weight: 600; margin-bottom: 8px;
+    font-size: 11px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--accent);
+  }
+
+  .alert {
+    border-left: 3px solid var(--red);
+    background: #FDF0EF;
+    padding: 18px 22px;
+    border-radius: 0 3px 3px 0;
+    margin: 24px 0;
+    font-size: 14.5px; color: #2a1010; line-height: 1.7;
+  }
+  .alert strong {
+    display: block; font-weight: 600; margin-bottom: 8px;
+    font-size: 11px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--red);
+  }
+
+  .note {
+    border-left: 3px solid var(--border2);
+    background: #F5F4F0;
+    padding: 14px 20px;
+    border-radius: 0 3px 3px 0;
+    margin: 18px 0;
+    font-size: 13.5px; color: var(--muted); line-height: 1.65;
+  }
+
+  .kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1px; background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 3px; overflow: hidden; margin: 28px 0;
+  }
+  .kpi { background: var(--surface); padding: 20px; }
+  .kpi-label {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 9px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--faint); margin-bottom: 8px;
+  }
+  .kpi-val {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px; line-height: 1; font-weight: 400; margin-bottom: 5px;
+  }
+  .kpi-val.red { color: var(--red); }
+  .kpi-val.green { color: var(--green); }
+  .kpi-val.blue { color: var(--accent); }
+  .kpi-val.amber { color: var(--amber); }
+  .kpi-desc { font-size: 12px; color: var(--muted); line-height: 1.4; }
+
+  .pull {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px; font-style: italic;
+    line-height: 1.5; color: var(--accent);
+    border-top: 2px solid var(--accent);
+    border-bottom: 1px solid var(--border);
+    padding: 22px 0; margin: 36px 0;
+  }
+
+  .rec-list { margin: 24px 0; }
+  .rec {
+    display: grid;
+    grid-template-columns: 36px 1fr;
+    gap: 16px; padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+  .rec:last-child { border-bottom: none; }
+  .rec-n {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px; color: var(--border2); line-height: 1; padding-top: 4px;
+  }
+  .rec-body h4 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .rec-body h4.urgent { color: var(--red); }
+  .rec-body p { font-size: 14px; color: var(--muted); margin: 0; line-height: 1.6; }
+  .rec-tag {
+    display: inline-block;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 9px; letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 7px; border-radius: 2px; margin-bottom: 6px;
+  }
+  .tag-urgent { background: #FDF0EF; color: var(--red); }
+  .tag-short  { background: #FDF5E6; color: var(--amber); }
+  .tag-medium { background: #EBF5EF; color: var(--green); }
+  .tag-ongoing{ background: #EBF0F8; color: var(--accent); }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 56px 0; }
+
+  .footnote {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 11px; color: var(--faint);
+    margin-top: 10px; line-height: 1.6;
+  }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 28px 48px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 11px; color: var(--faint);
+    flex-wrap: wrap; gap: 8px;
+  }
+  footer a { color: var(--faint); text-decoration: none; }
+  footer a:hover { color: var(--text); }
+
+  /* ── DOWNLOAD BAR ── */
+  .download-bar {
+    background: #F0F4FA;
+    border-top: 1px solid #D6E4F0;
+    border-bottom: 1px solid #D6E4F0;
+    padding: 14px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .download-bar-left {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 11px; letter-spacing: 0.06em;
+    color: #6B6860;
+  }
+  .download-bar-left svg { flex-shrink: 0; }
+  .download-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #C0392B;
+    color: #fff; text-decoration: none;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.06em;
+    padding: 9px 18px;
+    border-radius: 2px;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .download-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <a href="#">Portfolio</a>
+    <span class="sep">›</span>
+    <a href="#">Energy & Utilities</a>
+    <span class="sep">›</span>
+    <span class="current">Grid Performance Analysis</span>
+  </div>
+  <div class="nav-tag">Case Study 01 · Energy</div>
+</nav>
+
+<div class="hero">
+  <div class="case-label">Energy & Utilities · Distribution Network Performance</div>
+  <h1>Where Is the Grid <em>Leaking Money?</em></h1>
+  <p class="hero-deck">
+    A German distribution network operator has watched grid losses and unplanned outages climb for four consecutive years. The issue is no longer only technical. Excess losses now represent an estimated €8.3M annual cost, with 71% of the gap concentrated in one zone.
+  </p>
+  <p class="hero-deck" style="margin-top:-18px;">
+    This case shows how zone-level diagnostics, benchmark comparison, and cost modelling can turn a vague infrastructure concern into a clear investment priority.
+  </p>
+  <div class="meta-strip">
+    <div class="meta-cell"><label>Sector</label><span>Energy & Utilities</span></div>
+    <div class="meta-cell"><label>Network</label><span>3 Regional DSO Zones</span></div>
+    <div class="meta-cell"><label>Period</label><span>2020 – 2023</span></div>
+    <div class="meta-cell"><label>National Benchmark</label><span>SAIDI 12.8 min · 5.6% loss rate</span></div>
+    <div class="meta-cell"><label>Loss Cost Identified</label><span>€8.3M annually</span></div>
+  </div>
+</div>
+
+<div class="download-bar">
+  <div class="download-bar-left">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <rect x="1.5" y="1.5" width="13" height="13" rx="1.5" stroke="#C0392B" stroke-width="1.2"/>
+      <path d="M5 7.5h6M5 5h4M5 10h3" stroke="#C0392B" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>
+    This case includes a downloadable Excel workbook - data model, calculations, and dashboard.
+  </div>
+  <a href="Energy_Case1_Grid_Losses.xlsx" download class="download-btn">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <path d="M6.5 1v8M3.5 6.5l3 3 3-3M1 11h11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Download Excel Working File
+  </a>
+</div>
+
+<div class="content">
+
+  <!-- WHY THIS CASE -->
+  <div class="section">
+    <div class="section-marker">Context</div>
+    <h2>Why this problem matters</h2>
+    <p>
+      Germany's electricity grid is highly reliable at national level, but national averages can hide serious distribution-level problems. A DSO may look acceptable in aggregate while one regional zone is quietly driving most of the service quality and cost deterioration.
+    </p>
+    <p>
+      Grid losses are a direct financial cost because the operator must replace electricity that enters the network but does not reach customers. When outages rise at the same time, the problem also becomes a service, regulatory, and customer trust issue.
+    </p>
+    <p>
+      This case examines a representative German DSO with three regional zones: North, Central, and South. The business problem is not simply that losses are rising. It is that management does not know whether the cause is asset age, renewable integration, operational inefficiency, or a combination of all three.
+    </p>
+  </div>
+
+  <hr>
+
+  <!-- DATA SOURCES -->
+  <div class="section">
+    <div class="section-marker">Data Foundation</div>
+    <h2>Data sources and their role in this analysis</h2>
+    <p>
+      Operational data for individual DSOs is proprietary. The benchmarks used here are drawn from verified public sources. Asset-level figures are synthetic but constructed to be consistent with published German DSO performance ranges and Bundesnetzagentur monitoring data.
+    </p>
+    <p>
+      The diagnostic logic combines three layers: loss rate deviation from benchmark, outage performance against SAIDI, and zone characteristics such as asset age, underground cabling share, and renewable penetration. This creates a practical prioritisation model rather than a simple trend review.
+    </p>
+
+    <table class="source-table">
+      <thead>
+        <tr><th>Source</th><th>What it provided</th><th>Used for</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="source-name">Bundesnetzagentur SAIDI Reports 2020–2024</div>
+            <div class="source-limit">Excludes force majeure events (storms, floods). Published annually.</div>
+          </td>
+          <td>National average SAIDI by year. State-level anonymised interruption data.</td>
+          <td>Primary outage benchmark. Germany national SAIDI: 12.8 min (2023), 12.2 min (2022), 10-year avg 12.7 min.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">Bundesnetzagentur Monitoring Report 2024</div>
+            <div class="source-limit">Based on DSO self-reporting. Not audited at individual asset level.</div>
+          </td>
+          <td>National network balance. Total network losses: 27 TWh in 2023 out of 482.4 TWh net generation.</td>
+          <td>Loss rate benchmark: 5.6% national average. Loss energy procurement cost: €1.3bn in 2023.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">Clean Energy Wire / Bundesnetzagentur (via Der Spiegel)</div>
+            <div class="source-limit">Journalism-sourced from BNetzA data. Cross-checked against official monitoring report.</div>
+          </td>
+          <td>Redispatch and curtailment data. 19 TWh curtailed renewables in 2023. Redispatch cost: €3.1bn.</td>
+          <td>Context for grid congestion as a structural driver of distribution stress - particularly relevant to the North zone analysis.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">CEER European Benchmarking Report on Quality of Electricity Supply</div>
+            <div class="source-limit">Country-level aggregates only. Not broken down by DSO or network type.</div>
+          </td>
+          <td>European SAIDI comparison. Germany 12.8 min vs EU average ~30–40 min for comparable markets.</td>
+          <td>Contextualising Germany's national performance and setting the upper bound for what "acceptable" looks like regionally.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">WindEurope / BNetzA (grid congestion context)</div>
+            <div class="source-limit">Primarily covers transmission level. Distribution-level congestion less documented publicly.</div>
+          </td>
+          <td>Renewable integration pressures on distribution networks. Voltage volatility in high-penetration zones.</td>
+          <td>Framework for understanding why North zone - higher renewable penetration - shows different fault pattern from Central and South.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr>
+
+  <!-- THE SITUATION -->
+  <div class="section">
+    <div class="section-marker">The Situation</div>
+    <h2>Four years of rising losses, no clear explanation</h2>
+    <p>
+      The DSO's operations team had been tracking an uncomfortable trend. Grid losses - the gap between electricity fed into the network and electricity delivered to customers - had risen from 4.9% in 2020 to 6.8% in 2023, well above the German national average of 5.6%. Unplanned outage minutes per customer had climbed from 10.2 minutes to 17.4 minutes over the same period, now 36% above the national SAIDI benchmark of 12.8 minutes.
+    </p>
+
+    <div class="pull">
+      "Losses are up nearly two percentage points in four years. The regulator is asking questions. The board wants an explanation. Nobody has one that holds across all three zones."
+    </div>
+
+    <p>
+      The company operated three network zones - North, Central, and South - each with distinct characteristics. North was the largest zone by circuit length, with high rural coverage and the highest share of distributed renewable generation (wind and solar feeding back into the medium-voltage network). Central covered a mix of urban and industrial customers with the highest load density. South was the most recently upgraded zone, with a higher proportion of underground cabling.
+    </p>
+    <p>
+      The operations team's hypothesis was that aging infrastructure was the primary driver. But the data told a more complicated story. Without a structured analysis, it was impossible to know where investment would actually make a difference.
+    </p>
+    <p>
+      The core decision problem is therefore one of allocation: should capital be spread across the full network, targeted toward the oldest assets, or focused only on the zone where technical losses and outage minutes are compounding into measurable financial impact?
+    </p>
+
+    <!-- Network overview table -->
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Zone</th><th>Circuit Length</th><th>Customers</th><th>Avg Asset Age</th>
+          <th>Underground %</th><th>Renewable Penetration</th><th>Load Type</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge r1">North</span></td>
+          <td class="mono">3,200 km</td><td class="mono">142,000</td>
+          <td class="mono">32 years</td><td class="mono">38%</td>
+          <td class="mono">High (28%)</td><td>Rural / Mixed</td>
+        </tr>
+        <tr>
+          <td><span class="badge r2">Central</span></td>
+          <td class="mono">1,800 km</td><td class="mono">198,000</td>
+          <td class="mono">26 years</td><td class="mono">61%</td>
+          <td class="mono">Medium (14%)</td><td>Urban / Industrial</td>
+        </tr>
+        <tr>
+          <td><span class="badge r3">South</span></td>
+          <td class="mono">2,100 km</td><td class="mono">115,000</td>
+          <td class="mono">19 years</td><td class="mono">74%</td>
+          <td class="mono">Low (9%)</td><td>Suburban / Residential</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="footnote">Asset age and underground cabling % consistent with German DSO infrastructure profiles documented in Bundesnetzagentur network expansion plans (2024) and BDEW infrastructure surveys.</p>
+  </div>
+
+  <hr>
+
+  <!-- STEP 1: TREND ANALYSIS -->
+  <div class="section">
+    <div class="section-marker">Analysis · Step 1</div>
+    <h2>Four years of data, three zones - does the trend hold everywhere?</h2>
+    <p>
+      The first question was whether the deterioration in losses and outages was a portfolio-wide phenomenon or concentrated in specific zones. A company-wide average that masks zone-level divergence leads to unfocused investment - spending on infrastructure across the whole network when the problem is actually acute in one place.
+    </p>
+    <p>
+      The loss rate trend from 2020 to 2023 was disaggregated by zone. The result was not what the operations team expected.
+    </p>
+    <p>
+      Priority is assessed using a simple zone risk logic: loss rate above benchmark, deterioration over time, SAIDI deviation, and concentration of excess cost. This ensures the analysis points to where management action is most urgent, not just where the headline metric looks weak.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">Grid Loss Rate by Zone - 2020 to 2023</div>
+          <div class="chart-sub">Percentage of electricity fed into network that does not reach customers. National benchmark: 5.6% (2023).</div>
+        </div>
+        <div class="chart-num">Chart 1 of 4</div>
+      </div>
+      <div style="height:300px; position:relative"><canvas id="chart1"></canvas></div>
+      <div class="legend">
+        <div class="legend-item"><div class="leg-box" style="background:#1C3F6E"></div>North Zone</div>
+        <div class="legend-item"><div class="leg-box" style="background:#C07A1A"></div>Central Zone</div>
+        <div class="legend-item"><div class="leg-box" style="background:#2E7D55"></div>South Zone</div>
+        <div class="legend-item"><div class="leg-box" style="background:#999; opacity:0.6"></div>National Benchmark (5.6%)</div>
+      </div>
+    </div>
+
+    <div class="finding">
+      <strong>What the trend reveals</strong>
+      The loss rate deterioration is not uniform. South Zone has remained stable and below the national benchmark throughout - its recent infrastructure upgrades and high underground cabling ratio are holding. Central Zone has crept up modestly, consistent with gradual load growth outpacing capacity. North Zone tells a different story: its loss rate has risen from 5.8% in 2020 to 8.9% in 2023 - a 3.1 percentage point increase that accounts for the majority of the company-wide deterioration. The hypothesis that aging infrastructure is uniformly driving losses across all three zones does not hold. North Zone is the primary problem, and its characteristics - oldest assets, highest renewable penetration, longest circuit length - point to a more specific root cause than simple aging.
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- STEP 2: OUTAGE ANALYSIS -->
+  <div class="section">
+    <div class="section-marker">Analysis · Step 2</div>
+    <h2>Where are customers losing power - and for how long?</h2>
+    <p>
+      Grid losses represent a financial cost to the operator. Outages represent a service quality failure with regulatory and reputational consequences. The Bundesnetzagentur tracks SAIDI - System Average Interruption Duration Index - as the primary reliability metric for German DSOs. The national figure for 2023 was 12.8 minutes per customer. The company's overall figure was 17.4 minutes - above benchmark. But again, the zone-level picture is what matters.
+    </p>
+    <p>
+      SAIDI was disaggregated by zone and by fault category - equipment failure, third-party interference (dig-ins, vehicle strikes), weather-related, and planned maintenance. The separation of fault categories is important for the same reason as the downtime categorisation in portfolio analysis: the response to equipment failure is different from the response to dig-in incidents, and investment in cable protection schemes is different from investment in asset replacement.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">SAIDI by Zone and Fault Category - 2023</div>
+          <div class="chart-sub">Average customer outage minutes per year. National benchmark: 12.8 minutes (Bundesnetzagentur, 2023).</div>
+        </div>
+        <div class="chart-num">Chart 2 of 4</div>
+      </div>
+      <div style="height:320px; position:relative"><canvas id="chart2"></canvas></div>
+      <div class="legend">
+        <div class="legend-item"><div class="leg-box" style="background:#C0392B"></div>Equipment Failure</div>
+        <div class="legend-item"><div class="leg-box" style="background:#F5A623"></div>Third-Party Interference</div>
+        <div class="legend-item"><div class="leg-box" style="background:#7EB8D4"></div>Weather Related</div>
+        <div class="legend-item"><div class="leg-box" style="background:#B0BEC5"></div>Planned Maintenance</div>
+      </div>
+    </div>
+
+    <div class="alert">
+      <strong>North Zone exceeds national benchmark by 2.4×</strong>
+      North Zone SAIDI of 30.6 minutes is 2.4 times the national benchmark of 12.8 minutes and more than double Central and South Zones. Equipment failure is the dominant fault category - accounting for 16.2 of the 30.6 minutes - consistent with the zone's 32-year average asset age. But third-party interference at 7.8 minutes is also elevated relative to the other zones, suggesting overhead line exposure is a contributing factor alongside equipment age. South Zone at 9.1 minutes is actually below the national benchmark, validating the impact of its infrastructure upgrade programme. Central Zone at 12.4 minutes sits close to the national average - manageable but not a priority relative to North.
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- STEP 3: LOSS COST QUANTIFICATION -->
+  <div class="section">
+    <div class="section-marker">Analysis · Step 3</div>
+    <h2>What the losses actually cost</h2>
+    <p>
+      Network losses have a direct financial cost - the DSO must procure replacement energy to cover electricity that entered the network but was dissipated as heat or lost through technical inefficiencies. In Germany, this is called Verlustenergie (loss energy). The Bundesnetzagentur's monitoring report confirmed that TSO-level loss energy procurement cost €1.3 billion in 2023 across the national network - up from €0.8 billion in 2022 despite lower volumes, due to elevated reference prices.
+    </p>
+    <p>
+      At the DSO level, the cost calculation uses the volume of losses in MWh multiplied by the average procurement price for loss energy. For a mid-sized DSO feeding approximately 4.2 TWh annually into its distribution network, the difference between a 5.6% national average loss rate and the current 6.8% is not trivial.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">Annual Loss Energy Cost by Zone - Actual vs Benchmark (2023)</div>
+          <div class="chart-sub">Cost of excess losses above national benchmark rate. Average loss energy price: €85/MWh (2023 reference price, Bundesnetzagentur).</div>
+        </div>
+        <div class="chart-num">Chart 3 of 4</div>
+      </div>
+      <div style="height:300px; position:relative"><canvas id="chart3"></canvas></div>
+    </div>
+
+    <div class="kpi-strip">
+      <div class="kpi">
+        <div class="kpi-label">Total Annual Loss Cost</div>
+        <div class="kpi-val red">€8.3M</div>
+        <div class="kpi-desc">Excess losses above national 5.6% benchmark across all three zones</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">North Zone Share</div>
+        <div class="kpi-val red">71%</div>
+        <div class="kpi-desc">€5.9M of total excess cost concentrated in North Zone alone</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Loss Rate vs Benchmark</div>
+        <div class="kpi-val amber">+1.2pp</div>
+        <div class="kpi-desc">Company average 6.8% vs national 5.6% - 1.2 percentage points above</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">South Zone Performance</div>
+        <div class="kpi-val green">5.1%</div>
+        <div class="kpi-desc">Below national benchmark - infrastructure upgrade programme delivering results</div>
+      </div>
+    </div>
+
+    <div class="finding">
+      <strong>The financial case for North Zone prioritisation</strong>
+      North Zone's excess losses cost €5.9M annually in loss energy procurement alone. This figure does not include the cost of unplanned outages - crew dispatch, customer compensation under regulatory frameworks, and reputational impact. It also does not include the regulatory risk of continued SAIDI deterioration above benchmark, which in Germany triggers increased Bundesnetzagentur scrutiny and can affect the DSO's permitted revenue under incentive regulation. The financial case for prioritising North Zone investment is clear before a single infrastructure cost is modelled.
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- STEP 4: ROOT CAUSE -->
+  <div class="section">
+    <div class="section-marker">Analysis · Step 4</div>
+    <h2>Infrastructure age alone does not explain it - renewable integration does</h2>
+    <p>
+      The operations team's original hypothesis was straightforward: assets are aging, losses are rising, replace the assets. But if asset age were the primary driver, Central Zone - with a 26-year average asset age - would show a more similar loss profile to North Zone's 32-year assets. It does not. And South Zone's improvement after infrastructure upgrades supports the investment case but does not explain why North Zone's trajectory is steeper than Central's age profile would predict.
+    </p>
+    <p>
+      The additional variable is renewable penetration. North Zone has 28% distributed renewable generation, predominantly wind and solar, feeding back into the medium-voltage network. This bidirectional power flow creates voltage volatility that increases technical losses and stresses equipment that was designed for unidirectional load delivery. The combination of aging assets and high renewable penetration creates a compounding effect that neither factor alone would produce.
+    </p>
+    <p>
+      The operational pattern also matters. Equipment failure creates outage minutes, while voltage volatility increases technical losses before a visible failure occurs. That means the highest-cost risk may not always appear first as a breakdown. It can appear as a steady loss-rate increase that only becomes obvious once the data is viewed by zone.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">Loss Rate vs Asset Age and Renewable Penetration - Zone Comparison</div>
+          <div class="chart-sub">Bubble size = total circuit length (km). Illustrates how renewable penetration amplifies the effect of aging infrastructure.</div>
+        </div>
+        <div class="chart-num">Chart 4 of 4</div>
+      </div>
+      <div style="height:340px; position:relative"><canvas id="chart4"></canvas></div>
+      <div class="legend">
+        <div class="legend-item"><div class="leg-box" style="background:#1C3F6E"></div>North Zone</div>
+        <div class="legend-item"><div class="leg-box" style="background:#C07A1A"></div>Central Zone</div>
+        <div class="legend-item"><div class="leg-box" style="background:#2E7D55"></div>South Zone</div>
+      </div>
+    </div>
+
+    <div class="finding">
+      <strong>The real diagnosis - not aging infrastructure, but aging infrastructure under renewable stress</strong>
+      North Zone's loss problem is not simply that its assets are old. Central Zone's assets are also aging, but its lower renewable penetration means they operate under more predictable, unidirectional load conditions. North Zone's 32-year-old overhead lines and transformers were not designed for the bidirectional voltage swings introduced by 28% distributed renewable generation. The investment priority is therefore not a blanket asset replacement programme across the whole network - it is targeted replacement of the specific asset classes in North Zone most vulnerable to voltage volatility: medium-voltage transformers and overhead line sections in high-renewable-penetration feeder areas. This is a different investment brief - more specific, more defensible, and more cost-effective - than the operations team's original hypothesis would have produced.
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- RECOMMENDATIONS -->
+  <div class="section">
+    <div class="section-marker">Recommendations</div>
+    <h2>Where investment should go</h2>
+    <p>
+      Four actions follow from the analysis. They are ordered by financial impact, urgency, and controllability. The first priority is to address the zone where losses are both concentrated and financially material, while using lower-cost operational measures to stabilise performance during the investment cycle.
+    </p>
+
+    <div class="rec-list">
+      <div class="rec">
+        <div class="rec-n">1</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-urgent">Immediate</span>
+          <h4 class="urgent">Targeted asset replacement in North Zone high-renewable feeder areas</h4>
+          <p>The €5.9M annual excess loss cost in North Zone provides a clear investment threshold. Medium-voltage transformers and overhead line sections on feeders with above-average renewable backfeed should be prioritised for replacement or reinforcement. These assets are operating under conditions they were not designed for, and their failure mode is accelerating. The investment case closes in under two years at current loss energy prices.</p>
+          <p>Expected impact: reduce excess loss cost by €3M to €4M annually once priority feeders are reinforced, depending on procurement prices and asset replacement sequencing.</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="rec-n">2</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-short">Short Term</span>
+          <h4>Voltage management programme for North Zone medium-voltage network</h4>
+          <p>Asset replacement takes time and capital. A faster interim measure is active voltage management through on-load tap changers and reactive power compensation on the most stressed feeders in North Zone. This does not eliminate the loss problem but dampens the voltage volatility that is accelerating equipment stress and increasing technical losses. Estimated cost: €0.8M to €1.2M. Estimated loss reduction: 0.4 to 0.6 percentage points while the capital programme is executed.</p>
+          <p>Expected impact: €0.7M to €1.1M annual loss cost reduction as an interim measure before full asset replacement is complete.</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="rec-n">3</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-medium">Medium Term</span>
+          <h4>Third-party interference reduction in North Zone overhead network</h4>
+          <p>North Zone's SAIDI contribution from third-party interference (7.8 minutes) is disproportionately high relative to Central and South. The overhead line network in rural areas is exposed to vegetation incursion and vehicle strikes. A targeted overhead-to-underground conversion programme on the highest-incident feeder sections, combined with a vegetation management schedule, would reduce this component of outage minutes. The Bundesnetzagentur's network expansion data confirms that underground conversion is a standard DSO resilience investment in Germany's current regulatory environment.</p>
+          <p>Expected impact: reduce SAIDI by 3 to 5 minutes in North Zone and lower emergency crew dispatch costs by focusing on the highest-incident feeder sections.</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="rec-n">4</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-ongoing">Ongoing</span>
+          <h4>Establish zone-level KPI monitoring with quarterly reporting to the board</h4>
+          <p>The four-year trend in losses and outages was visible in the data throughout, but was only being reviewed at the company aggregate level. Zone-level SAIDI, loss rate, and loss energy cost should be tracked monthly, with quarterly board reporting. The South Zone improvement story shows that investment works and is measurable. The same discipline applied to North Zone will make the impact of intervention visible and provide the evidence base for the next regulatory review period.</p>
+          <p>Expected impact: earlier detection of zone-level deterioration and stronger evidence for capex approval, regulatory discussions, and performance steering.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- MODEL NOTES -->
+  <div class="section">
+    <div class="section-marker">Model Notes</div>
+    <h2>Assumptions and limitations</h2>
+    <p>
+      The analysis uses a representative DSO dataset calibrated to public German grid benchmarks. Actual DSO asset-level performance data is proprietary and not publicly disclosed.
+    </p>
+    <p>
+      Loss cost is calculated using an average loss energy procurement price of €85/MWh. Actual procurement costs may vary by contract structure, regulatory treatment, and market price movements.
+    </p>
+    <p>
+      SAIDI comparisons use national benchmarks from Bundesnetzagentur reporting. Regional geography, weather exposure, and network topology can create legitimate deviations from national averages.
+    </p>
+    <p>
+      The root cause diagnosis is based on observed relationships between asset age, renewable penetration, underground cabling share, loss rate, and outage performance. A final investment decision would require feeder-level engineering validation and asset condition testing.
+    </p>
+  </div>
+
+  <hr>
+
+  <!-- REFERENCES -->
+  <div class="section">
+    <div class="section-marker">References</div>
+    <h2>Full citations</h2>
+    <ul style="font-size:13.5px; color:var(--muted); line-height:2.2; padding-left:18px">
+      <li>Bundesnetzagentur (2024). <em>Press Release: Electricity Supply Interruptions in 2023</em>. Bonn: Federal Network Agency. SAIDI 2023: 12.8 minutes per customer.</li>
+      <li>Bundesnetzagentur (2025). <em>Press Release: Electricity Supply Interruptions in 2024</em>. Bonn: Federal Network Agency. SAIDI 2024: 11.7 minutes; 10-year average: 12.7 minutes.</li>
+      <li>Bundesnetzagentur / Bundeskartellamt (2024). <em>Monitoring Report 2024: Key Findings</em>. Bonn: Federal Network Agency. Network losses 2023: 27 TWh; loss energy cost: €1.3bn.</li>
+      <li>Clean Energy Wire (2024). <em>Curtailing of Renewable Power Increases in Germany in 2023 as Re-dispatch Costs Recede</em>. Berlin: CLEW. Sourced from Bundesnetzagentur data via Der Spiegel.</li>
+      <li>CEER (2023). <em>Benchmarking Report on the Quality of Electricity and Gas Supply 2022</em>. Brussels: Council of European Energy Regulators.</li>
+      <li>BDEW (2024). <em>Netzausbau und Investitionen in die Energieinfrastruktur</em>. Berlin: Bundesverband der Energie- und Wasserwirtschaft. Infrastructure survey data.</li>
+      <li>Bundesnetzagentur (2024). <em>Network Development Plan (NEP) 2024</em>. Bonn: Federal Network Agency. Grid expansion investment context.</li>
+    </ul>
+  </div>
+
+</div>
+
+<footer>
+  <span>Business Analyst Portfolio · Shivam Asthana · Energy Case 01</span>
+  <a href="#">← Back to Portfolio</a>
+</footer>
+
+<script>
+Chart.defaults.font.family = "'Source Sans 3', sans-serif";
+Chart.defaults.color = '#555';
+
+const years = ['2020', '2021', '2022', '2023'];
+const zones = ['North', 'Central', 'South'];
+const zoneColors = { North: '#1C3F6E', Central: '#C07A1A', South: '#2E7D55' };
+
+// Chart 1 - Loss rate trend by zone
+(function(){
+  const data = {
+    North:   [5.8, 6.5, 7.6, 8.9],
+    Central: [5.2, 5.4, 5.7, 6.1],
+    South:   [6.1, 5.8, 5.4, 5.1],
+  };
+  const benchmark = [5.6, 5.6, 5.6, 5.6];
+
+  new Chart(document.getElementById('chart1'), {
+    type: 'line',
+    data: {
+      labels: years,
+      datasets: [
+        ...zones.map(z => ({
+          label: `${z} Zone`,
+          data: data[z],
+          borderColor: zoneColors[z],
+          backgroundColor: zoneColors[z] + '22',
+          borderWidth: 2.5,
+          pointRadius: 5,
+          pointBackgroundColor: zoneColors[z],
+          tension: 0.3,
+          fill: false,
+        })),
+        {
+          label: 'National Benchmark (5.6%)',
+          data: benchmark,
+          borderColor: '#999',
+          borderWidth: 1.5,
+          borderDash: [6, 4],
+          pointRadius: 0,
+          fill: false,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw}%` }}
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: {
+          title: { display: true, text: 'Grid Loss Rate (%)' },
+          grid: { color: '#eee' },
+          min: 4, max: 10,
+          ticks: { callback: v => v + '%' }
+        }
+      }
+    }
+  });
+})();
+
+// Chart 2 - SAIDI stacked bar by zone and fault category
+(function(){
+  const saidiData = {
+    equipment:  [16.2, 5.8, 3.4],
+    thirdParty: [7.8,  2.6, 1.8],
+    weather:    [4.1,  2.2, 2.0],
+    planned:    [2.5,  1.8, 1.9],
+  };
+
+  new Chart(document.getElementById('chart2'), {
+    type: 'bar',
+    data: {
+      labels: ['North Zone', 'Central Zone', 'South Zone'],
+      datasets: [
+        { label: 'Equipment Failure',       data: saidiData.equipment,  backgroundColor: '#C0392B' },
+        { label: 'Third-Party Interference',data: saidiData.thirdParty, backgroundColor: '#F5A623' },
+        { label: 'Weather Related',         data: saidiData.weather,    backgroundColor: '#7EB8D4' },
+        { label: 'Planned Maintenance',     data: saidiData.planned,    backgroundColor: '#B0BEC5' },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { mode: 'index', intersect: false,
+          callbacks: {
+            afterBody: items => {
+              const total = items.reduce((s, i) => s + i.raw, 0);
+              return [`Total: ${total.toFixed(1)} min`];
+            }
+          }
+        },
+        annotation: {}
+      },
+      scales: {
+        x: { stacked: true, grid: { display: false } },
+        y: {
+          stacked: true,
+          title: { display: true, text: 'SAIDI (minutes per customer per year)' },
+          grid: { color: '#eee' }
+        }
+      }
+    }
+  });
+})();
+
+// Chart 3 - Loss energy cost bar
+(function(){
+  // Network feed-in by zone (TWh), loss rates
+  const zoneData = [
+    { zone: 'North Zone',   feedIn: 1.85, actualLoss: 0.089, benchLoss: 0.056, color: '#C0392B' },
+    { zone: 'Central Zone', feedIn: 1.52, actualLoss: 0.061, benchLoss: 0.056, color: '#F5A623' },
+    { zone: 'South Zone',   feedIn: 0.83, actualLoss: 0.051, benchLoss: 0.056, color: '#2E7D55' },
+  ];
+  const price = 85; // €/MWh
+
+  const excessCost = zoneData.map(z => {
+    const excessPct = Math.max(0, z.actualLoss - z.benchLoss);
+    return (z.feedIn * 1e6 * excessPct * price) / 1e6; // €M
+  });
+
+  const benchmarkCost = zoneData.map(z => {
+    return (z.feedIn * 1e6 * Math.min(z.actualLoss, z.benchLoss) * price) / 1e6;
+  });
+
+  new Chart(document.getElementById('chart3'), {
+    type: 'bar',
+    data: {
+      labels: zoneData.map(z => z.zone),
+      datasets: [
+        {
+          label: 'Benchmark loss cost (€M)',
+          data: benchmarkCost.map(v => v.toFixed(2)),
+          backgroundColor: '#D6E4F0',
+          borderRadius: 2,
+        },
+        {
+          label: 'Excess loss cost above benchmark (€M)',
+          data: excessCost.map(v => v.toFixed(2)),
+          backgroundColor: zoneData.map(z => z.color),
+          borderRadius: 2,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: {
+          mode: 'index', intersect: false,
+          callbacks: { label: ctx => `${ctx.dataset.label}: €${ctx.raw}M` }
+        }
+      },
+      scales: {
+        x: { stacked: true, grid: { display: false } },
+        y: {
+          stacked: true,
+          title: { display: true, text: 'Annual Loss Energy Cost (€ million)' },
+          grid: { color: '#eee' }
+        }
+      }
+    }
+  });
+})();
+
+// Chart 4 - Scatter: asset age vs loss rate, bubble = circuit length
+(function(){
+  const zonePoints = [
+    { label: 'North Zone',   x: 32, y: 8.9, r: 28, color: '#1C3F6E', size: 3200 },
+    { label: 'Central Zone', x: 26, y: 6.1, r: 14, color: '#C07A1A', size: 1800 },
+    { label: 'South Zone',   x: 19, y: 5.1, r: 9,  color: '#2E7D55', size: 2100 },
+  ];
+
+  new Chart(document.getElementById('chart4'), {
+    type: 'bubble',
+    data: {
+      datasets: zonePoints.map(z => ({
+        label: z.label,
+        data: [{ x: z.x, y: z.y, r: z.r }],
+        backgroundColor: z.color + 'CC',
+        borderColor: z.color,
+        borderWidth: 2,
+      }))
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const z = zonePoints[ctx.datasetIndex];
+              return [
+                `${z.label}`,
+                `Asset age: ${z.x} years`,
+                `Loss rate: ${z.y}%`,
+                `Renewable penetration: ${z.r}%`,
+                `Circuit length: ${z.size.toLocaleString()} km`
+              ];
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Average Asset Age (years)' },
+          grid: { color: '#eee' }, min: 10, max: 40
+        },
+        y: {
+          title: { display: true, text: 'Grid Loss Rate (%)' },
+          grid: { color: '#eee' }, min: 3, max: 11,
+          ticks: { callback: v => v + '%' }
+        }
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Who Is About to Leave — and Why? Customer Churn & Affordability Analysis</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Source+Sans+3:wght@300;400;500;600&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#FAFAF7; --surface:#FFFFFF; --border:#E8E6DF; --border2:#D0CEC6;
+    --text:#181818; --muted:#6B6860; --faint:#9B9890;
+    --accent:#1C3F6E; --green:#2E7D55; --red:#C0392B; --amber:#C07A1A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{background:var(--bg);color:var(--text);font-family:'Source Sans 3',sans-serif;font-weight:300;line-height:1.8;font-size:16px;}
+  nav{position:sticky;top:0;z-index:100;background:rgba(250,250,247,0.95);backdrop-filter:blur(6px);border-bottom:1px solid var(--border);padding:12px 48px;display:flex;align-items:center;justify-content:space-between;}
+  .nav-left{display:flex;align-items:center;gap:10px;}
+  nav a{color:var(--muted);text-decoration:none;font-size:13px;}
+  nav a:hover{color:var(--text);}
+  nav .sep{color:var(--border2);font-size:12px;}
+  nav .current{color:var(--text);font-weight:500;font-size:13px;}
+  .nav-tag{font-family:'Source Code Pro',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;padding:3px 8px;border:1px solid var(--border2);color:var(--muted);border-radius:2px;}
+  .hero{max-width:800px;margin:72px auto 0;padding:0 48px;}
+  .case-label{font-family:'Source Code Pro',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+  .case-label::after{content:'';display:block;flex:1;height:1px;background:var(--border);max-width:60px;}
+  h1{font-family:'Playfair Display',serif;font-size:clamp(30px,4.5vw,48px);line-height:1.15;font-weight:400;margin-bottom:22px;letter-spacing:-0.02em;}
+  h1 em{font-style:italic;color:var(--accent);}
+  .hero-deck{font-size:18px;color:var(--muted);font-weight:300;line-height:1.6;max-width:640px;margin-bottom:36px;}
+  .meta-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));border:1px solid var(--border);border-radius:3px;margin-bottom:64px;overflow:hidden;}
+  .meta-cell{padding:16px 20px;border-right:1px solid var(--border);}
+  .meta-cell:last-child{border-right:none;}
+  .meta-cell label{display:block;font-family:'Source Code Pro',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--faint);margin-bottom:4px;}
+  .meta-cell span{font-size:13px;font-weight:500;}
+  .content{max-width:800px;margin:0 auto;padding:0 48px 96px;}
+  .section{margin-bottom:72px;}
+  .section-marker{font-family:'Source Code Pro',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--faint);margin-bottom:12px;}
+  h2{font-family:'Playfair Display',serif;font-size:28px;font-weight:400;line-height:1.25;margin-bottom:20px;letter-spacing:-0.01em;}
+  p{margin-bottom:18px;color:#2e2e2e;font-size:15.5px;}
+  p:last-child{margin-bottom:0;}
+  .source-table{width:100%;border-collapse:collapse;font-size:13px;margin:20px 0;}
+  .source-table th{font-family:'Source Code Pro',monospace;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--faint);padding:10px 14px;border-bottom:2px solid var(--border);text-align:left;font-weight:500;}
+  .source-table td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.55;}
+  .source-table tr:last-child td{border-bottom:none;}
+  .source-name{font-weight:500;color:var(--accent);}
+  .source-limit{font-size:12px;color:var(--muted);margin-top:3px;font-style:italic;}
+  .data-table{width:100%;border-collapse:collapse;font-size:13px;margin:20px 0;background:var(--surface);border:1px solid var(--border);border-radius:3px;overflow:hidden;}
+  .data-table th{font-family:'Source Code Pro',monospace;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--faint);padding:11px 14px;border-bottom:2px solid var(--border);text-align:left;font-weight:500;background:#F5F4F0;}
+  .data-table td{padding:10px 14px;border-bottom:1px solid var(--border);}
+  .data-table tr:last-child td{border-bottom:none;}
+  .data-table tr:hover td{background:#F9F8F5;}
+  .mono{font-family:'Source Code Pro',monospace;font-size:12px;}
+  .badge{display:inline-block;padding:2px 7px;border-radius:2px;font-size:11px;font-weight:500;}
+  .high{background:#FDF0EF;color:#C0392B;}
+  .med{background:#FDF5E6;color:#C07A1A;}
+  .low{background:#EBF5EF;color:#2E7D55;}
+  .chart-wrap{background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:28px 28px 20px;margin:24px 0;}
+  .chart-title-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border);gap:16px;flex-wrap:wrap;}
+  .chart-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:400;}
+  .chart-sub{font-size:12px;color:var(--muted);font-style:italic;margin-top:3px;}
+  .chart-num{font-family:'Source Code Pro',monospace;font-size:10px;color:var(--faint);white-space:nowrap;}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;margin-top:14px;color:var(--muted);}
+  .legend-item{display:flex;align-items:center;gap:6px;}
+  .leg-box{width:12px;height:12px;border-radius:2px;flex-shrink:0;}
+  .finding{border-left:3px solid var(--accent);background:#F0F4FA;padding:18px 22px;border-radius:0 3px 3px 0;margin:24px 0;font-size:14.5px;color:#1a2a3a;line-height:1.7;}
+  .finding strong{display:block;font-weight:600;margin-bottom:8px;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent);}
+  .alert{border-left:3px solid var(--red);background:#FDF0EF;padding:18px 22px;border-radius:0 3px 3px 0;margin:24px 0;font-size:14.5px;color:#2a1010;line-height:1.7;}
+  .alert strong{display:block;font-weight:600;margin-bottom:8px;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--red);}
+  .kpi-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:3px;overflow:hidden;margin:28px 0;}
+  .kpi{background:var(--surface);padding:20px;}
+  .kpi-label{font-family:'Source Code Pro',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--faint);margin-bottom:8px;}
+  .kpi-val{font-family:'Playfair Display',serif;font-size:28px;line-height:1;font-weight:400;margin-bottom:5px;}
+  .kpi-val.red{color:var(--red);} .kpi-val.green{color:var(--green);} .kpi-val.blue{color:var(--accent);} .kpi-val.amber{color:var(--amber);}
+  .kpi-desc{font-size:12px;color:var(--muted);line-height:1.4;}
+  .pull{font-family:'Playfair Display',serif;font-size:20px;font-style:italic;line-height:1.5;color:var(--accent);border-top:2px solid var(--accent);border-bottom:1px solid var(--border);padding:22px 0;margin:36px 0;}
+  .rec-list{margin:24px 0;}
+  .rec{display:grid;grid-template-columns:36px 1fr;gap:16px;padding:20px 0;border-bottom:1px solid var(--border);align-items:start;}
+  .rec:last-child{border-bottom:none;}
+  .rec-n{font-family:'Playfair Display',serif;font-size:22px;color:var(--border2);line-height:1;padding-top:4px;}
+  .rec-body h4{font-size:15px;font-weight:600;margin-bottom:6px;}
+  .rec-body h4.urgent{color:var(--red);}
+  .rec-body p{font-size:14px;color:var(--muted);margin:0;line-height:1.6;}
+  .rec-tag{display:inline-block;font-family:'Source Code Pro',monospace;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;padding:2px 7px;border-radius:2px;margin-bottom:6px;}
+  .tag-urgent{background:#FDF0EF;color:var(--red);}
+  .tag-short{background:#FDF5E6;color:var(--amber);}
+  .tag-medium{background:#EBF5EF;color:var(--green);}
+  .tag-ongoing{background:#EBF0F8;color:var(--accent);}
+  hr{border:none;border-top:1px solid var(--border);margin:56px 0;}
+  .footnote{font-family:'Source Code Pro',monospace;font-size:11px;color:var(--faint);margin-top:10px;line-height:1.6;}
+  footer{border-top:1px solid var(--border);padding:28px 48px;display:flex;justify-content:space-between;align-items:center;font-family:'Source Code Pro',monospace;font-size:11px;color:var(--faint);flex-wrap:wrap;gap:8px;}
+  footer a{color:var(--faint);text-decoration:none;}
+  footer a:hover{color:var(--text);}
+
+  /* ── DOWNLOAD BAR ── */
+  .download-bar {
+    background: #F0F4FA;
+    border-top: 1px solid #D6E4F0;
+    border-bottom: 1px solid #D6E4F0;
+    padding: 14px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .download-bar-left {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 11px; letter-spacing: 0.06em;
+    color: #6B6860;
+  }
+  .download-bar-left svg { flex-shrink: 0; }
+  .download-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #2E7D55;
+    color: #fff; text-decoration: none;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.06em;
+    padding: 9px 18px;
+    border-radius: 2px;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .download-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <a href="#">Portfolio</a><span class="sep">›</span>
+    <a href="#">Energy & Utilities</a><span class="sep">›</span>
+    <span class="current">Customer Churn & Affordability Analysis</span>
+  </div>
+  <div class="nav-tag">Case Study 03 · Energy</div>
+</nav>
+
+<div class="hero">
+  <div class="case-label">Energy & Utilities · Customer Retention</div>
+  <h1>Who Is About to Leave — <em>and Why?</em></h1>
+  <p class="hero-deck">
+    A German retail energy supplier has watched churn rise from 8% to 14% over two years while a growing share of customers struggle to pay their bills. This translates to roughly €2.4M in annual margin at risk — but retention spend was being allocated without distinguishing price-driven churn from affordability-driven churn.
+  </p>
+  <div class="meta-strip">
+    <div class="meta-cell"><label>Sector</label><span>Energy Retail</span></div>
+    <div class="meta-cell"><label>Customer Base</label><span>200,000 households & SMEs</span></div>
+    <div class="meta-cell"><label>Churn Trend</label><span>8% → 14% over 2 years</span></div>
+    <div class="meta-cell"><label>Market Context</label><span>Post-2022 energy crisis</span></div>
+    <div class="meta-cell"><label>Output</label><span>Segmentation + Intervention Model</span></div>
+  </div>
+</div>
+
+<div class="download-bar">
+  <div class="download-bar-left">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <rect x="1.5" y="1.5" width="13" height="13" rx="1.5" stroke="#2E7D55" stroke-width="1.2"/>
+      <path d="M5 7.5h6M5 5h4M5 10h3" stroke="#2E7D55" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>
+    This case includes a downloadable Excel workbook — data model, calculations, and dashboard.
+  </div>
+  <a href="Energy_Case3_Customer_Churn.xlsx" download class="download-btn">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <path d="M6.5 1v8M3.5 6.5l3 3 3-3M1 11h11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Download Excel Working File
+  </a>
+</div>
+
+<div class="content">
+
+  <!-- WHY THIS CASE -->
+  <div class="section">
+    <div class="section-marker">Context</div>
+    <h2>Why this problem matters</h2>
+    <p>
+      Germany's energy retail market is structurally easy to switch in. Comparison platforms, high supplier density, and tariff transparency mean customers can move quickly when a better offer appears. After the 2022 energy price shock temporarily suppressed switching, expired crisis-era contracts released a delayed churn wave in 2023 and 2024.
+    </p>
+    <p>
+      At the same time, affordability pressure intensified. Lower-income households were spending a rising share of income on energy, while suppliers saw more payment plan requests, arrears signals, and bill-related complaints. For a retail supplier, this creates two different problems that can look similar in the data: customers who leave because competitors are cheaper, and customers who struggle because the bill itself is unaffordable.
+    </p>
+    <p>
+      This case examines both dimensions together. The objective is not simply to reduce churn, but to distinguish between price-driven churn and affordability-driven risk so that retention spend, payment support, and customer outreach are targeted correctly.
+    </p>
+  </div>
+
+  <hr>
+
+  <!-- DATA SOURCES -->
+  <div class="section">
+    <div class="section-marker">Data Foundation</div>
+    <h2>Data sources and their role in this analysis</h2>
+
+    <table class="source-table">
+      <thead><tr><th>Source</th><th>What it provided</th><th>Used for</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="source-name">Bundesnetzagentur Monitoring Reports 2023, 2024, 2025</div>
+            <div class="source-limit">Aggregate market data. Individual supplier figures not disclosed.</div>
+          </td>
+          <td>National supplier switching volumes: ~4M in 2022, 7.1M in 2024. Disconnection figures: ~209,000 in 2022 (down 11% YoY). Market concentration and tariff data.</td>
+          <td>Market context benchmarks. Churn rate calibration. Switching surge timing (2023–2024).</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">ResearchGate — Competition in German Electricity Retail (BNA/BKA 2018)</div>
+            <div class="source-limit">Pre-crisis baseline. Market structure has evolved since 2018.</div>
+          </td>
+          <td>German energy retail churn rate pre-crisis: approximately 11%. Average 130 retail suppliers per distribution grid zone.</td>
+          <td>Pre-crisis churn baseline for trend comparison.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">Frontiers in Sustainable Cities — Energy Poverty in Germany (2022)</div>
+            <div class="source-limit">Academic study. Data from May 2022 — peak crisis period.</div>
+          </td>
+          <td>10.4% of households with income below 60% of median spending >10% on energy in May 2022 (up from 8% in 2018). Including lower-middle income: 16.8% at risk.</td>
+          <td>Affordability vulnerability segmentation basis and risk thresholds.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">MVV Energie AG — Annual Report & Public Disclosures (2024/2025)</div>
+            <div class="source-limit">Company-level disclosure. Regional utility — not representative of all German suppliers.</div>
+          </td>
+          <td>Customer challenges context: price volatility impact, emergency fund provision, reduced investment propensity among customers.</td>
+          <td>Qualitative framing of customer affordability challenges at a comparable regional German utility.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">BDEW Energiemarkt Deutschland 2024</div>
+            <div class="source-limit">Industry association aggregate. Regional variation applies.</div>
+          </td>
+          <td>Average household electricity price trends 2021–2024. Default tariff vs competitive tariff price differentials. SME energy cost exposure.</td>
+          <td>Price sensitivity modelling across customer segments. Tariff gap calculations.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr>
+
+  <!-- SITUATION -->
+  <div class="section">
+    <div class="section-marker">The Situation</div>
+    <h2>Two problems that look different but share the same root</h2>
+    <p>
+      The retail supplier — a regional German utility with 200,000 residential and SME customers — had been watching two metrics deteriorate simultaneously since mid-2022. Annual churn had risen from 8% in 2021 to 14% in 2023, representing around 28,000 customer losses per year. At the same time, payment plan requests had increased 340% and complaint volumes related to bill amounts had tripled.
+    </p>
+
+    <div class="pull">
+      "The retention team is trying to stop customers leaving. The customer care team is trying to stop customers defaulting. They have different dashboards, different KPIs, and no shared picture of who these customers actually are."
+    </div>
+
+    <p>
+      The business problem was not just rising churn. It was the inability to distinguish between price-driven churn and affordability-driven churn — leading to inefficient retention spend, delayed support interventions, and inconsistent customer treatment across teams.
+    </p>
+    <p>
+      The commercial team's diagnosis was straightforward: prices were too high relative to competitors after the crisis, customers were switching to lower-priced newcomers, and the retention offer needed to be more competitive. The customer care team's diagnosis was different: a specific subset of customers — lower-income households on default tariffs — were struggling to pay regardless of competitor pricing and needed support interventions, not price matching.
+    </p>
+    <p>
+      Both diagnoses were partially right. But managing them as separate problems meant the retention budget was being spent on customers who were actually leaving for affordability reasons — where a price match would not help because the issue was absolute cost, not relative competitiveness. And the support interventions were not reaching price-sensitive switchers who could have been retained with the right offer before they left.
+    </p>
+    <p>
+      The brief was to segment the customer base across both dimensions — churn risk and affordability vulnerability — and design targeted interventions for each quadrant.
+    </p>
+  </div>
+
+  <hr>
+
+  <!-- STEP 1: CHURN TREND -->
+  <div class="section">
+    <div class="section-marker">Analysis · Step 1</div>
+    <h2>Understanding the churn pattern — is it market-wide or supplier-specific?</h2>
+    <p>
+      Before designing any intervention, the first question was whether the supplier's 14% churn was a company problem or a market condition. A supplier that has priced more aggressively than the market during the crisis will experience higher-than-average churn as contracts expire. A supplier that has priced similarly to the market will experience market-average churn. The distinction matters for intervention design — the first requires competitive pricing action, the second requires differentiation.
+    </p>
+    <p>
+      The churn trend was decomposed by customer segment — residential households on fixed contracts, households on default (Grundversorgung) tariffs, and SME customers — and compared against the market switching trajectory published by the Bundesnetzagentur.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">Annual Churn Rate by Customer Segment — 2020 to 2023</div>
+          <div class="chart-sub">vs German market average switching rate. Market data: Bundesnetzagentur Monitoring Reports 2023–2025.</div>
+        </div>
+        <div class="chart-num">Chart 1 of 4</div>
+      </div>
+      <div style="height:300px;position:relative"><canvas id="chart1"></canvas></div>
+      <div class="legend">
+        <div class="legend-item"><div class="leg-box" style="background:#1C3F6E"></div>Fixed Contract Residential</div>
+        <div class="legend-item"><div class="leg-box" style="background:#C07A1A"></div>Default Tariff Residential</div>
+        <div class="legend-item"><div class="leg-box" style="background:#2E7D55"></div>SME Customers</div>
+        <div class="legend-item"><div class="leg-box" style="background:#999;opacity:0.6"></div>Market Average (BNetzA)</div>
+      </div>
+    </div>
+
+    <div class="finding">
+      <strong>The churn is not uniform — and the pattern tells a specific story</strong>
+      Fixed contract residential customers show the sharpest churn spike in 2023 — consistent with the Bundesnetzagentur's documented pattern of suppressed switching during 2022 releasing once contracts expired. This is largely a market-wide phenomenon: these customers were locked in during the crisis and left when they could. Default tariff customers show a different pattern — churn was elevated throughout, not spiking in 2023. These customers were never locked in and left steadily throughout the period. SME churn is the most stable, suggesting SME customers weighed switching costs differently and were more inert. The implication for intervention design is that fixed-contract and default-tariff customers need different responses.
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- STEP 2: SEGMENTATION -->
+  <div class="section">
+    <div class="section-marker">Analysis · Step 2</div>
+    <h2>Mapping the customer base across two dimensions</h2>
+    <p>
+      The segmentation model places each customer on two axes: churn risk and affordability vulnerability. Churn risk is scored using weighted factors: contract expiry proximity (30%), tariff price gap to market (25%), tenure (15%), complaint frequency (15%), and payment irregularity (15%). Affordability vulnerability is scored using payment regularity, arrears history, tariff type, estimated household income bracket, and energy spend as a share of estimated income.
+    </p>
+    <p>
+      This produces four quadrants — each requiring a fundamentally different response.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">Customer Segmentation — Churn Risk vs Affordability Vulnerability</div>
+          <div class="chart-sub">Bubble size represents number of customers in each segment. Four quadrants, four different intervention strategies.</div>
+        </div>
+        <div class="chart-num">Chart 2 of 4</div>
+      </div>
+      <div style="height:360px;position:relative"><canvas id="chart2"></canvas></div>
+    </div>
+
+    <table class="data-table" style="margin-top:24px">
+      <thead>
+        <tr><th>Segment</th><th>Customers</th><th>Value at Risk</th><th>Churn Risk</th><th>Affordability</th><th>Primary Driver</th><th>Intervention</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Switchers</strong></td><td class="mono">~42,000</td><td class="mono">~€3.6M</td>
+          <td><span class="badge high">High</span></td>
+          <td><span class="badge low">Stable</span></td>
+          <td>Price differential vs competitors — can afford to switch, motivated by savings</td>
+          <td>Proactive retention offer before contract expiry</td>
+        </tr>
+        <tr>
+          <td><strong>Vulnerable Loyals</strong></td><td class="mono">~28,000</td><td class="mono">~€1.2M</td>
+          <td><span class="badge low">Low</span></td>
+          <td><span class="badge high">Stressed</span></td>
+          <td>Cannot easily switch (inertia, complexity) but struggling with bills — default tariff overpayers</td>
+          <td>Social tariff, payment plan, emergency fund referral</td>
+        </tr>
+        <tr>
+          <td><strong>At-Risk Vulnerable</strong></td><td class="mono">~18,000</td><td class="mono">~€1.5M</td>
+          <td><span class="badge high">High</span></td>
+          <td><span class="badge high">Stressed</span></td>
+          <td>Both price-sensitive and financially stressed — most complex intervention need</td>
+          <td>Combined: affordable tariff + payment support + proactive outreach</td>
+        </tr>
+        <tr>
+          <td><strong>Stable Base</strong></td><td class="mono">~112,000</td><td class="mono">Monitor</td>
+          <td><span class="badge low">Low</span></td>
+          <td><span class="badge low">Stable</span></td>
+          <td>Satisfied customers on competitive contracts — not at immediate risk</td>
+          <td>Standard retention at contract renewal. Monitor for deterioration.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="footnote">Segment sizing consistent with German energy retail market structure. Vulnerable customer proportions calibrated to Frontiers in Sustainable Cities (2022) energy poverty research: 10.4–16.8% of households at affordability risk.</p>
+
+    <div class="alert">
+      <strong>The misallocation problem — why the retention budget was failing</strong>
+      The commercial team's retention budget was being allocated primarily to high-churn customers regardless of affordability profile. Approximately €180 per customer in retention offers was being directed at the Switcher segment — competitive, price-motivated customers who respond to better tariff offers. But a significant portion of this budget was also reaching At-Risk Vulnerable customers, where a price match alone does not address the underlying affordability problem. These customers may accept a short-term offer and still default on payments or leave once the offer expires. The intervention design needs to differ by quadrant — not just by churn score.
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- STEP 3: CHURN DRIVERS -->
+  <div class="section">
+    <div class="section-marker">Analysis · Step 3</div>
+    <h2>What is actually driving the decision to leave</h2>
+    <p>
+      Exit survey data and complaint records were analysed across the churned customer population to identify the primary stated and behavioural drivers of departure. This decomposition is critical because the response to a price-driven departure is different from the response to a service-driven departure — and combining them into a single "retention offer" produces a diluted response to both.
+    </p>
+    <p>
+      The timing pattern also matters. Price-sensitive switchers tend to leave close to contract expiry, often within 30 days of checking alternative tariffs. Affordability-driven risk builds earlier: repeated late payments, instalment requests, and bill complaints usually appear two to three months before churn, default, or escalation. This means the intervention window is different for each segment.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">Churn Driver Breakdown by Customer Segment — 2023</div>
+          <div class="chart-sub">Primary reason for departure as reported in exit surveys and inferred from complaint and payment data.</div>
+        </div>
+        <div class="chart-num">Chart 3 of 4</div>
+      </div>
+      <div style="height:340px;position:relative"><canvas id="chart3"></canvas></div>
+      <div class="legend">
+        <div class="legend-item"><div class="leg-box" style="background:#C0392B"></div>Price — better deal elsewhere</div>
+        <div class="legend-item"><div class="leg-box" style="background:#F5A623"></div>Absolute cost — cannot afford</div>
+        <div class="legend-item"><div class="leg-box" style="background:#1C3F6E"></div>Contract expiry — natural switch</div>
+        <div class="legend-item"><div class="leg-box" style="background:#7EB8D4"></div>Service dissatisfaction</div>
+        <div class="legend-item"><div class="leg-box" style="background:#B0BEC5"></div>Relocation / other</div>
+      </div>
+    </div>
+
+    <div class="finding">
+      <strong>Price sensitivity and affordability stress are distinct problems requiring distinct responses</strong>
+      Among fixed-contract residential churners, 61% cited finding a better price elsewhere — a competitive retention offer is the right response. Among default tariff churners, 44% cited absolute cost unaffordability — these customers are not looking for a better deal, they are looking for a lower bill. A competitive retention offer at, say, €0.27/kWh versus a competitor's €0.25/kWh does not solve a problem for a household that cannot manage either price. The correct intervention for this group is a social tariff, payment plan, or emergency fund referral — not price matching. Treating these two groups with the same retention offer wastes budget on one group and fails the other.
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- STEP 4: INTERVENTION MODEL -->
+  <div class="section">
+    <div class="section-marker">Analysis · Step 4</div>
+    <h2>What targeted interventions look like — and what they cost vs save</h2>
+    <p>
+      For each quadrant, an intervention was modelled with an estimated cost per customer and an estimated retention value. Retention value is calculated as customer lifetime value — estimated annual margin multiplied by expected tenure extension — net of intervention cost.
+    </p>
+    <p>
+      The financial model uses average residential customer margin of approximately €85/year (consistent with BDEW data on competitive tariff margins in the German retail market) and SME customer margin of approximately €220/year. Intervention costs reflect realistic programme costs: proactive retention calls (€15–25/customer), tariff restructuring administration (€10–20), payment plan set-up (€30–50), social tariff administration (€40–60).
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">Estimated Retention Value vs Intervention Cost by Segment</div>
+          <div class="chart-sub">Net retention value = (customers retained × annual margin × expected tenure extension) − intervention cost. Values per 1,000 customers.</div>
+        </div>
+        <div class="chart-num">Chart 4 of 4</div>
+      </div>
+      <div style="height:320px;position:relative"><canvas id="chart4"></canvas></div>
+      <div class="legend">
+        <div class="legend-item"><div class="leg-box" style="background:#1C3F6ECC"></div>Intervention Cost (€000s per 1,000 customers)</div>
+        <div class="legend-item"><div class="leg-box" style="background:#2E7D55CC"></div>Estimated Retention Value (€000s per 1,000 customers)</div>
+      </div>
+    </div>
+
+    <div class="kpi-strip">
+      <div class="kpi">
+        <div class="kpi-label">Total Customers at Risk</div>
+        <div class="kpi-val red">88,000</div>
+        <div class="kpi-desc">Switchers + Vulnerable Loyals + At-Risk Vulnerable combined</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Annual Churn Cost</div>
+        <div class="kpi-val red">~€2.4M</div>
+        <div class="kpi-desc">28,000 customers lost × ~€85 avg annual margin</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Highest ROI Intervention</div>
+        <div class="kpi-val green">Switchers</div>
+        <div class="kpi-desc">Proactive retention offer before contract expiry — 4.2× ROI</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Most Urgent Need</div>
+        <div class="kpi-val amber">At-Risk</div>
+        <div class="kpi-desc">18,000 customers — both churn and default risk simultaneously</div>
+      </div>
+    </div>
+
+    <div class="finding">
+      <strong>The sequencing matters as much as the segmentation</strong>
+      The Switcher segment offers the best ROI — a proactive tariff offer before contract expiry costs roughly €20 per customer and retains customers worth €85/year for 2+ additional years. This intervention should be prioritised and automated. The At-Risk Vulnerable segment is the most complex and most urgent — these customers require a combined response that addresses both price and affordability simultaneously. Critically, these customers cannot be identified by churn score alone. A customer with high churn risk but no affordability stress needs a different intervention from a customer with high churn risk and payment difficulty. Without the two-dimensional segmentation, both get the same retention call — and the intervention fails for the second group.
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- RECOMMENDATIONS -->
+  <div class="section">
+    <div class="section-marker">Recommendations</div>
+    <h2>Four interventions, four segments</h2>
+    <p>
+      Interventions are prioritised based on expected ROI, urgency, and ease of execution. High-impact, low-cost actions are executed first, while dual-risk customers receive a more intensive support model because the cost of inaction is both commercial and operational.
+    </p>
+
+    <div class="rec-list">
+      <div class="rec">
+        <div class="rec-n">1</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-urgent">Immediate · Switchers (42,000)</span>
+          <h4 class="urgent">Automate proactive retention offers triggered 90 days before contract expiry</h4>
+          <p>Fixed-contract customers who leave do so largely because they were never contacted before their contract expired and found a better price elsewhere on Check24 or Verivox. A proactive outreach at 90 days — by email and SMS — offering a competitive renewal tariff captures these customers before they start comparing. The intervention cost is low (€15–20 per customer at scale) and the retention value is high. Expected impact: reduce churn in this segment by ~2–3 percentage points, generating roughly €500k–€700k in annual retained margin. This should be automated, not manual.</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="rec-n">2</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-urgent">Immediate · Vulnerable Loyals (28,000)</span>
+          <h4 class="urgent">Proactively migrate default tariff customers to lower-cost products</h4>
+          <p>Default tariff (Grundversorgung) customers are systematically overpaying relative to competitive market rates. Many are on this tariff through inertia, not choice — and a significant proportion are lower-income households for whom the overpayment is an affordability burden. Proactively offering a migration to a competitive tariff, combined with a payment plan assessment for those showing arrears signals, reduces both payment default risk and long-term churn. Expected impact: reduce payment escalation and protect roughly €250k–€350k of annual value by moving customers before arrears become unrecoverable. The regulatory framework supports this — suppliers are encouraged to help vulnerable customers access competitive products.</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="rec-n">3</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-short">Short Term · At-Risk Vulnerable (18,000)</span>
+          <h4>Implement a combined affordability and retention programme for the dual-risk segment</h4>
+          <p>This segment requires a fundamentally different intervention — not a retention call and not a standard payment plan, but a structured conversation that addresses both dimensions. The programme should include: (1) a social tariff or hardship rate that reduces the absolute bill level, (2) a payment plan or instalment arrangement, (3) referral to external social support where appropriate (Sozialberatung, energy poverty organisations), and (4) a digital consumption monitoring tool that helps customers reduce usage. Emergency fund provision, as documented in MVV Energie's customer support model, should be available as a last resort. Expected impact: lower dual-risk churn/default exposure by stabilising the highest-risk 18,000 customers, with estimated annual value protection of ~€300k–€450k.</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="rec-n">4</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-ongoing">Ongoing · All Segments</span>
+          <h4>Build a unified customer risk dashboard that combines churn score and affordability indicators</h4>
+          <p>The structural problem this analysis exposed is that churn risk and affordability risk were tracked on separate systems by separate teams. A unified customer risk view — combining payment behaviour, tariff type, contract status, complaint history, and estimated affordability indicators — should feed a single operational dashboard. Customers who move into the At-Risk Vulnerable quadrant should trigger an automated workflow, not wait until a complaint is lodged or a contract expires. Early identification is the difference between intervention and recovery. Expected impact: reduce manual case handling, shorten response time, and create a shared operating view for Commercial and Customer Care teams.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ASSUMPTIONS -->
+  <div class="section">
+    <div class="section-marker">Model Integrity</div>
+    <h2>Assumptions and limitations</h2>
+    <p>
+      The analysis is designed as a decision-support model, not a predictive machine-learning model. Its purpose is to help a commercial team prioritise interventions using available customer and market signals.
+    </p>
+    <div class="note">
+      <strong>Key assumptions:</strong><br>
+      Household income is inferred through proxy indicators such as tariff type, payment behaviour, arrears history, and estimated regional income bands. Retention value assumes an average residential margin of €85 per customer per year and does not model wholesale price volatility. Churn driver attribution combines exit survey responses with complaint and payment data, so self-reporting bias and silent churn are possible. Segment-level value at risk is directional and intended for prioritisation, not financial reporting.
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- REFERENCES -->
+  <div class="section">
+    <div class="section-marker">References</div>
+    <h2>Full citations</h2>
+    <ul style="font-size:13.5px;color:var(--muted);line-height:2.2;padding-left:18px">
+      <li>Bundesnetzagentur / Bundeskartellamt (2023). <em>Monitoring Report 2023</em>. Bonn: Federal Network Agency. Supplier switching: 4M in 2022 (−16% YoY). Disconnections: ~209,000 in 2022.</li>
+      <li>Bundesnetzagentur (2025). <em>Monitoring Report 2025 — Press Release</em>. Bonn: Federal Network Agency. 7.1M electricity customers switched in 2024.</li>
+      <li>Bundesnetzagentur / Bundeskartellamt (2025). <em>Monitoring Report 2025 — Key Findings</em>. Switching surge context: expensive 2022-era contracts expiring in 2023–2024.</li>
+      <li>Grischkat, S. et al. (2022). <em>Competition in the German Electricity Retail Business</em>. ResearchGate / BNA BKA (2018). Pre-crisis churn rate ~11%.</li>
+      <li>Köhler, B. et al. (2022). <em>To What Extent Can Community Energy Mitigate Energy Poverty in Germany?</em> Frontiers in Sustainable Cities. Energy poverty: 10.4% of low-income households spending >10% on energy in May 2022.</li>
+      <li>MVV Energie AG (2024/2025). <em>Annual Report and Investor Communications</em>. Mannheim: MVV Energie. Customer affordability challenges and emergency fund documentation.</li>
+      <li>BDEW (2024). <em>Energiemarkt Deutschland 2024</em>. Berlin: Bundesverband der Energie- und Wasserwirtschaft. Retail price differentials and competitive tariff margins.</li>
+    </ul>
+  </div>
+
+</div>
+
+<footer>
+  <span>Shivam Asthana · Portfolio · Energy Case 03</span>
+  <a href="#">← Back to Portfolio</a>
+</footer>
+
+<script>
+Chart.defaults.font.family = "'Source Sans 3', sans-serif";
+Chart.defaults.color = '#555';
+
+// Chart 1 — Churn rate trend
+(function(){
+  const years = ['2020','2021','2022','2023'];
+  new Chart(document.getElementById('chart1'),{
+    type:'line',
+    data:{
+      labels:years,
+      datasets:[
+        {label:'Fixed Contract Residential',data:[6.2,7.8,5.1,16.4],borderColor:'#1C3F6E',backgroundColor:'#1C3F6E22',borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#1C3F6E',tension:0.3,fill:false},
+        {label:'Default Tariff Residential',data:[9.1,10.2,11.8,13.6],borderColor:'#C07A1A',backgroundColor:'#C07A1A22',borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#C07A1A',tension:0.3,fill:false},
+        {label:'SME Customers',data:[4.8,5.2,4.6,6.1],borderColor:'#2E7D55',backgroundColor:'#2E7D5522',borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#2E7D55',tension:0.3,fill:false},
+        {label:'Market Average (BNetzA)',data:[11,11,9.2,13.8],borderColor:'#999',borderDash:[6,4],borderWidth:1.5,pointRadius:0,fill:false},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
+      scales:{
+        x:{grid:{display:false}},
+        y:{title:{display:true,text:'Annual Churn Rate (%)'},grid:{color:'#eee'},min:0,max:20,ticks:{callback:v=>v+'%'}}
+      }
+    }
+  });
+})();
+
+// Chart 2 — Scatter segmentation matrix
+(function(){
+  const segments = [
+    {label:'Switchers',x:82,y:25,r:42,color:'#C0392B'},
+    {label:'Vulnerable Loyals',x:22,y:78,r:28,color:'#F5A623'},
+    {label:'At-Risk Vulnerable',x:75,y:82,r:18,color:'#8B0000'},
+    {label:'Stable Base',x:20,y:22,r:112,color:'#2E7D55'},
+  ];
+  new Chart(document.getElementById('chart2'),{
+    type:'bubble',
+    data:{datasets:segments.map(s=>({
+      label:s.label,
+      data:[{x:s.x,y:s.y,r:Math.sqrt(s.r)*2.2}],
+      backgroundColor:s.color+'99',
+      borderColor:s.color,
+      borderWidth:2,
+    }))},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>{
+          const s=segments[ctx.datasetIndex];
+          return [`${s.label}`,`~${s.r},000 customers`,`Churn risk: ${s.x}%`,`Vulnerability: ${s.y}%`];
+        }}}
+      },
+      scales:{
+        x:{title:{display:true,text:'Churn Risk Score (0=low, 100=high)'},grid:{color:'#eee'},min:0,max:100},
+        y:{title:{display:true,text:'Affordability Vulnerability Score (0=stable, 100=stressed)'},grid:{color:'#eee'},min:0,max:100}
+      }
+    }
+  });
+})();
+
+// Chart 3 — Churn driver breakdown stacked bar
+(function(){
+  new Chart(document.getElementById('chart3'),{
+    type:'bar',
+    data:{
+      labels:['Fixed Contract\nResidential','Default Tariff\nResidential','SME Customers'],
+      datasets:[
+        {label:'Price — better deal elsewhere',data:[61,28,45],backgroundColor:'#C0392B'},
+        {label:'Absolute cost — cannot afford',data:[12,44,8],backgroundColor:'#F5A623'},
+        {label:'Contract expiry — natural switch',data:[18,12,22],backgroundColor:'#1C3F6E'},
+        {label:'Service dissatisfaction',data:[6,10,18],backgroundColor:'#7EB8D4'},
+        {label:'Relocation / other',data:[3,6,7],backgroundColor:'#B0BEC5'},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,
+        callbacks:{afterBody:items=>[`Total: ${items.reduce((s,i)=>s+i.raw,0)}%`]}
+      }},
+      scales:{
+        x:{stacked:true,grid:{display:false}},
+        y:{stacked:true,title:{display:true,text:'Share of churn (%)'},grid:{color:'#eee'},max:100,ticks:{callback:v=>v+'%'}}
+      }
+    }
+  });
+})();
+
+// Chart 4 — Retention value vs cost
+(function(){
+  const segments=['Switchers\n(42k)','Vulnerable Loyals\n(28k)','At-Risk Vulnerable\n(18k)'];
+  const cost=[20,45,65];     // € per customer intervention cost
+  const value=[84,62,48];    // € per customer net retention value (margin × tenure × retention rate − cost)
+
+  new Chart(document.getElementById('chart4'),{
+    type:'bar',
+    data:{
+      labels:segments,
+      datasets:[
+        {label:'Intervention Cost (€000s per 1,000 customers)',data:cost.map(v=>v*1),backgroundColor:'#1C3F6ECC',borderRadius:2},
+        {label:'Estimated Retention Value (€000s per 1,000 customers)',data:value.map(v=>v*1),backgroundColor:'#2E7D55CC',borderRadius:2},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: €${ctx.raw}k per 1,000 customers`}}},
+      scales:{
+        x:{grid:{display:false},ticks:{font:{size:11}}},
+        y:{title:{display:true,text:'€ (thousands) per 1,000 customers'},grid:{color:'#eee'}}
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>

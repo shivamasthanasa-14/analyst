@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>12 Assets, No Visibility - Renewable Portfolio Performance Analysis</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Source+Sans+3:wght@300;400;500;600&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #FAFAF7;
+    --surface:  #FFFFFF;
+    --border:   #E8E6DF;
+    --border2:  #D0CEC6;
+    --text:     #181818;
+    --muted:    #6B6860;
+    --faint:    #9B9890;
+    --accent:   #1C3F6E;
+    --green:    #2E7D55;
+    --red:      #C0392B;
+    --amber:    #C07A1A;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Source Sans 3', sans-serif;
+    font-weight: 300;
+    line-height: 1.8;
+    font-size: 16px;
+  }
+
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(250,250,247,0.95);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 48px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-left { display: flex; align-items: center; gap: 10px; }
+  nav a { color: var(--muted); text-decoration: none; font-size: 13px; }
+  nav a:hover { color: var(--text); }
+  nav .sep { color: var(--border2); font-size: 12px; }
+  nav .current { color: var(--text); font-weight: 500; font-size: 13px; }
+  .nav-tag {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 10px; letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border: 1px solid var(--border2);
+    color: var(--muted); border-radius: 2px;
+  }
+
+  .hero {
+    max-width: 800px;
+    margin: 72px auto 0;
+    padding: 0 48px;
+  }
+
+  .case-label {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 11px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--accent);
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .case-label::after {
+    content: ''; display: block; flex: 1;
+    height: 1px; background: var(--border); max-width: 60px;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(30px, 4.5vw, 48px);
+    line-height: 1.15; font-weight: 400;
+    margin-bottom: 22px; letter-spacing: -0.02em;
+  }
+  h1 em { font-style: italic; color: var(--accent); }
+
+  .hero-deck {
+    font-size: 18px; color: var(--muted);
+    font-weight: 300; line-height: 1.6;
+    max-width: 640px; margin-bottom: 36px;
+  }
+
+  .meta-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    border: 1px solid var(--border);
+    border-radius: 3px; margin-bottom: 64px; overflow: hidden;
+  }
+  .meta-cell {
+    padding: 16px 20px;
+    border-right: 1px solid var(--border);
+  }
+  .meta-cell:last-child { border-right: none; }
+  .meta-cell label {
+    display: block;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 9px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--faint); margin-bottom: 4px;
+  }
+  .meta-cell span { font-size: 13px; font-weight: 500; }
+
+  .content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 48px 96px;
+  }
+
+  .section { margin-bottom: 72px; }
+
+  .section-marker {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 10px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--faint);
+    margin-bottom: 12px;
+  }
+
+  h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px; font-weight: 400;
+    line-height: 1.25; margin-bottom: 20px;
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 15px; font-weight: 600;
+    margin: 28px 0 10px;
+  }
+
+  p { margin-bottom: 18px; color: #2e2e2e; font-size: 15.5px; }
+  p:last-child { margin-bottom: 0; }
+
+  .source-table {
+    width: 100%; border-collapse: collapse;
+    font-size: 13px; margin: 20px 0;
+  }
+  .source-table th {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 9px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--faint);
+    padding: 10px 14px;
+    border-bottom: 2px solid var(--border);
+    text-align: left; font-weight: 500;
+  }
+  .source-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top; line-height: 1.55;
+  }
+  .source-table tr:last-child td { border-bottom: none; }
+  .source-name { font-weight: 500; color: var(--accent); }
+  .source-limit { font-size: 12px; color: var(--muted); margin-top: 3px; font-style: italic; }
+
+  .data-table {
+    width: 100%; border-collapse: collapse;
+    font-size: 13px; margin: 20px 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px; overflow: hidden;
+  }
+  .data-table th {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 9px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--faint);
+    padding: 11px 14px;
+    border-bottom: 2px solid var(--border);
+    text-align: left; font-weight: 500;
+    background: #F5F4F0;
+  }
+  .data-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: #F9F8F5; }
+  .mono { font-family: 'Source Code Pro', monospace; font-size: 12px; }
+  .badge {
+    display: inline-block; padding: 2px 7px;
+    border-radius: 2px; font-size: 11px; font-weight: 500;
+  }
+  .de  { background: #EBF0F8; color: #1C3F6E; }
+  .nl  { background: #FDF5E6; color: #C07A1A; }
+  .dk  { background: #EBF5EF; color: #2E7D55; }
+
+  .chart-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 28px 28px 20px;
+    margin: 24px 0;
+  }
+  .chart-title-row {
+    display: flex; justify-content: space-between;
+    align-items: flex-start; margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    gap: 16px; flex-wrap: wrap;
+  }
+  .chart-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px; font-weight: 400;
+  }
+  .chart-sub { font-size: 12px; color: var(--muted); font-style: italic; margin-top: 3px; }
+  .chart-num {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 10px; color: var(--faint); white-space: nowrap;
+  }
+
+  .legend {
+    display: flex; gap: 14px; flex-wrap: wrap;
+    font-size: 12px; margin-top: 14px; color: var(--muted);
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .leg-box { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; }
+
+  .finding {
+    border-left: 3px solid var(--accent);
+    background: #F0F4FA;
+    padding: 18px 22px;
+    border-radius: 0 3px 3px 0;
+    margin: 24px 0;
+    font-size: 14.5px; color: #1a2a3a; line-height: 1.7;
+  }
+  .finding strong {
+    display: block; font-weight: 600; margin-bottom: 8px;
+    font-size: 11px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--accent);
+  }
+
+  .alert {
+    border-left: 3px solid var(--red);
+    background: #FDF0EF;
+    padding: 18px 22px;
+    border-radius: 0 3px 3px 0;
+    margin: 24px 0;
+    font-size: 14.5px; color: #2a1010; line-height: 1.7;
+  }
+  .alert strong {
+    display: block; font-weight: 600; margin-bottom: 8px;
+    font-size: 11px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--red);
+  }
+
+  .note {
+    border-left: 3px solid var(--border2);
+    background: #F5F4F0;
+    padding: 14px 20px;
+    border-radius: 0 3px 3px 0;
+    margin: 18px 0;
+    font-size: 13.5px; color: var(--muted); line-height: 1.65;
+  }
+
+  .kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1px; background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 3px; overflow: hidden; margin: 28px 0;
+  }
+  .kpi { background: var(--surface); padding: 20px; }
+  .kpi-label {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 9px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--faint); margin-bottom: 8px;
+  }
+  .kpi-val {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px; line-height: 1; font-weight: 400; margin-bottom: 5px;
+  }
+  .kpi-val.red { color: var(--red); }
+  .kpi-val.green { color: var(--green); }
+  .kpi-val.blue { color: var(--accent); }
+  .kpi-desc { font-size: 12px; color: var(--muted); line-height: 1.4; }
+
+  .pull {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px; font-style: italic;
+    line-height: 1.5; color: var(--accent);
+    border-top: 2px solid var(--accent);
+    border-bottom: 1px solid var(--border);
+    padding: 22px 0; margin: 36px 0;
+  }
+
+  .rec-list { margin: 24px 0; }
+  .rec {
+    display: grid;
+    grid-template-columns: 36px 1fr;
+    gap: 16px; padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+  .rec:last-child { border-bottom: none; }
+  .rec-n {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px; color: var(--border2); line-height: 1; padding-top: 4px;
+  }
+  .rec-body h4 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .rec-body h4.urgent { color: var(--red); }
+  .rec-body p { font-size: 14px; color: var(--muted); margin: 0; line-height: 1.6; }
+  .rec-tag {
+    display: inline-block;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 9px; letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 7px; border-radius: 2px; margin-bottom: 6px;
+  }
+  .tag-urgent { background: #FDF0EF; color: var(--red); }
+  .tag-short  { background: #FDF5E6; color: var(--amber); }
+  .tag-medium { background: #EBF5EF; color: var(--green); }
+  .tag-ongoing{ background: #EBF0F8; color: var(--accent); }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 56px 0; }
+
+  .footnote {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 11px; color: var(--faint);
+    margin-top: 10px; line-height: 1.6;
+  }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 28px 48px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 11px; color: var(--faint);
+    flex-wrap: wrap; gap: 8px;
+  }
+  footer a { color: var(--faint); text-decoration: none; }
+  footer a:hover { color: var(--text); }
+
+  /* ── DOWNLOAD BAR ── */
+  .download-bar {
+    background: #F0F4FA;
+    border-top: 1px solid #D6E4F0;
+    border-bottom: 1px solid #D6E4F0;
+    padding: 14px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .download-bar-left {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 11px; letter-spacing: 0.06em;
+    color: #6B6860;
+  }
+  .download-bar-left svg { flex-shrink: 0; }
+  .download-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #1C3F6E;
+    color: #fff; text-decoration: none;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.06em;
+    padding: 9px 18px;
+    border-radius: 2px;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .download-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <a href="#">Portfolio</a>
+    <span class="sep">›</span>
+    <a href="#">Energy & Utilities</a>
+    <span class="sep">›</span>
+    <span class="current">Renewable Portfolio Analysis</span>
+  </div>
+  <div class="nav-tag">Case Study 04 · Energy</div>
+</nav>
+
+<div class="hero">
+  <div class="case-label">Energy & Utilities · Portfolio Performance</div>
+  <h1>12 Assets, No Visibility - <em>What Is Actually Underperforming?</em></h1>
+  <p class="hero-deck">
+    A European renewable developer with 730 MW across three countries could not answer a basic question from its board: which assets are underperforming, and why. This case structures the data, defines the framework, and surfaces where the money is being lost.
+  </p>
+  <p class="hero-deck" style="margin-top:-18px;">
+    The analysis identifies a €4.49M annual revenue gap, with one asset alone contributing more than 80% of the shortfall.
+  </p>
+  <div class="meta-strip">
+    <div class="meta-cell"><label>Sector</label><span>Energy & Utilities</span></div>
+    <div class="meta-cell"><label>Portfolio</label><span>730 MW · 12 Assets</span></div>
+    <div class="meta-cell"><label>Markets</label><span>DE · NL · DK</span></div>
+    <div class="meta-cell"><label>Revenue at Stake</label><span>€155.8M target</span></div>
+    <div class="meta-cell"><label>Gap Identified</label><span>€4.49M shortfall</span></div>
+  </div>
+</div>
+
+<div class="download-bar">
+  <div class="download-bar-left">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <rect x="1.5" y="1.5" width="13" height="13" rx="1.5" stroke="#1C3F6E" stroke-width="1.2"/>
+      <path d="M5 7.5h6M5 5h4M5 10h3" stroke="#1C3F6E" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>
+    This case includes a downloadable Excel workbook - data model, calculations, and dashboard.
+  </div>
+  <a href="Energy_Case4_Renewable_Portfolio.xlsx" download class="download-btn">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <path d="M6.5 1v8M3.5 6.5l3 3 3-3M1 11h11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Download Excel Working File
+  </a>
+</div>
+
+<div class="content">
+
+  <!-- WHY THIS CASE -->
+  <div class="section">
+    <div class="section-marker">Context</div>
+    <h2>Why this problem matters</h2>
+    <p>
+      European renewable developers are scaling faster than their management infrastructure. A developer that operated two or three assets in 2015 may now manage twelve or twenty across multiple countries - each with its own country team, its own reporting format, and its own definition of what good performance looks like.
+    </p>
+    <p>
+      This fragmentation is the default state of most mid-sized renewable portfolios today. The consequence is that underperformance goes undetected for months, root causes get misdiagnosed, and management decisions - on O&M contracts, TSO engagement, capital allocation - get made without a shared analytical foundation.
+    </p>
+    <p>
+      This case examines exactly that situation: a 730 MW portfolio across Germany, the Netherlands, and Denmark where the data existed but no framework existed to make it speak. The analysis moves from a raw set of disconnected numbers to a prioritised set of actions - and shows how the same symptom in two different assets turns out to have two completely different causes.
+    </p>
+  </div>
+
+  <hr>
+
+  <!-- DATA SOURCES -->
+  <div class="section">
+    <div class="section-marker">Data Foundation</div>
+    <h2>Data sources and their role in this analysis</h2>
+    <p>
+      Asset-level operational data for private renewable portfolios is proprietary and not publicly available. The approach taken here uses verified public benchmarks as the reference framework and constructs asset-level figures consistent with those benchmarks and with published operator disclosures - standard practice in portfolio benchmarking work.
+    </p>
+
+    <table class="source-table">
+      <thead>
+        <tr><th>Source</th><th>What it provided</th><th>Used for</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="source-name">Bruegel EU Renewables Value Tracker</div>
+            <div class="source-limit">Based on ENTSO-E Transparency Platform data. Updated annually.</div>
+          </td>
+          <td>Capacity factors and capture rates by country and technology across European bidding zones.</td>
+          <td>Primary CF benchmarks for all three countries. Capture rate discounts by technology.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">ENTSO-E Statistical Factsheet 2023</div>
+            <div class="source-limit">Official TSO data. Some reporting gaps for smaller markets.</div>
+          </td>
+          <td>Generation by technology and country. Annual capacity data. Day-ahead wholesale prices.</td>
+          <td>Country-level wholesale price references: Germany €95/MWh, Netherlands €100/MWh, Denmark €90/MWh.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">WindEurope 2023 Statistics &amp; O&amp;M Report</div>
+            <div class="source-limit">Industry association data. Covers EU and select non-EU markets.</div>
+          </td>
+          <td>Wind share by country. Mechanical availability and downtime benchmarks.</td>
+          <td>Country wind performance context. Unplanned downtime benchmark: ~263 hours/year onshore wind.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">Copernicus ESOTC 2023</div>
+            <div class="source-limit">Climate-based methodology. Does not capture technology or policy effects.</div>
+          </td>
+          <td>Renewable resource quality across Europe in 2023. CF anomalies vs long-run average.</td>
+          <td>Context on whether 2023 was an above or below-average wind year in each country.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">Ember European Electricity Review 2024</div>
+            <div class="source-limit">Derived from ENTSO-E and national TSO data.</div>
+          </td>
+          <td>2023 generation mix, price trends, and country-level emissions.</td>
+          <td>Cross-check on wholesale price assumptions.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">RWE Annual Report 2023</div>
+            <div class="source-limit">Single company disclosure. Not representative of all operators.</div>
+          </td>
+          <td>Disclosed offshore wind curtailment rates in Germany and the Netherlands in 2023.</td>
+          <td>Basis for grid curtailment hours modelled for the Dutch offshore asset.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr>
+
+  <!-- THE SITUATION -->
+  <div class="section">
+    <div class="section-marker">The Situation</div>
+    <h2>What the company was facing</h2>
+    <p>
+      The developer's asset management team tracked performance across twelve assets using disconnected Excel files, each maintained independently by country teams in Germany, the Netherlands, and Denmark. There was no common KPI definition. Germany measured availability differently from Denmark. The Netherlands team tracked curtailment hours; the German team did not.
+    </p>
+
+    <div class="pull">
+      "The board asked which assets were underperforming. The team had twelve different spreadsheets and no common definition of underperformance."
+    </div>
+
+    <p>
+      When the board asked, ahead of a mid-year investor review, which assets were underperforming and what was being done about it - the asset management team had no answer that held across the portfolio. Individual asset managers knew their own numbers. Nobody had the full picture.
+    </p>
+    <p>
+      The immediate question was: across 730 MW of wind and solar in three markets, where is performance falling short of what these assets should be delivering, and what is actually causing it? The portfolio below is the starting point. Understanding its composition is necessary before any comparison is meaningful because a 2015 German onshore asset and a 2023 Danish offshore installation cannot be judged against the same number.
+    </p>
+    <p>
+      The core business problem is not the absence of data. It is the absence of a consistent performance framework across assets, leading to delayed identification of underperformance and misdirected operational focus.
+    </p>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Asset</th><th>Country</th><th>Technology</th>
+          <th>Capacity</th><th>Commissioned</th><th>Benchmark CF</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Nordwind I</td><td><span class="badge de">Germany</span></td><td>Onshore Wind</td><td class="mono">45 MW</td><td class="mono">2016</td><td class="mono">23.0%</td></tr>
+        <tr><td>Nordwind II</td><td><span class="badge de">Germany</span></td><td>Onshore Wind</td><td class="mono">60 MW</td><td class="mono">2018</td><td class="mono">23.0%</td></tr>
+        <tr><td>Elbewind</td><td><span class="badge de">Germany</span></td><td>Onshore Wind</td><td class="mono">30 MW</td><td class="mono">2015</td><td class="mono">23.0%</td></tr>
+        <tr><td>Sachsenwind</td><td><span class="badge de">Germany</span></td><td>Onshore Wind</td><td class="mono">50 MW</td><td class="mono">2021</td><td class="mono">23.0%</td></tr>
+        <tr><td>Sonnfeld I</td><td><span class="badge de">Germany</span></td><td>Solar PV</td><td class="mono">25 MW</td><td class="mono">2019</td><td class="mono">11.0%</td></tr>
+        <tr><td>Sonnfeld II</td><td><span class="badge de">Germany</span></td><td>Solar PV</td><td class="mono">35 MW</td><td class="mono">2022</td><td class="mono">11.0%</td></tr>
+        <tr><td>Kustwind</td><td><span class="badge nl">Netherlands</span></td><td>Onshore Wind</td><td class="mono">55 MW</td><td class="mono">2017</td><td class="mono">26.0%</td></tr>
+        <tr><td>Nordsee Alpha</td><td><span class="badge nl">Netherlands</span></td><td>Offshore Wind</td><td class="mono">120 MW</td><td class="mono">2023</td><td class="mono">38.0%</td></tr>
+        <tr><td>Randstad Solar</td><td><span class="badge nl">Netherlands</span></td><td>Solar PV</td><td class="mono">40 MW</td><td class="mono">2020</td><td class="mono">11.0%</td></tr>
+        <tr><td>Vesterhav</td><td><span class="badge dk">Denmark</span></td><td>Onshore Wind</td><td class="mono">70 MW</td><td class="mono">2016</td><td class="mono">29.0%</td></tr>
+        <tr><td>Jutland Wind</td><td><span class="badge dk">Denmark</span></td><td>Onshore Wind</td><td class="mono">50 MW</td><td class="mono">2020</td><td class="mono">29.0%</td></tr>
+        <tr><td>Anholt East</td><td><span class="badge dk">Denmark</span></td><td>Offshore Wind</td><td class="mono">150 MW</td><td class="mono">2022</td><td class="mono">40.0%</td></tr>
+      </tbody>
+    </table>
+    <p class="footnote">Benchmark CFs: Bruegel EU Renewables Value Tracker · WindEurope 2023 · Copernicus ESOTC 2023. Germany onshore CFs are lower than NL/DK due to a high proportion of older installations in lower-wind inland areas, documented in WindEurope 2023.</p>
+  </div>
+
+  <hr>
+
+  <!-- STEP 1 -->
+  <div class="section">
+    <div class="section-marker">Analysis · Step 1</div>
+    <h2>Understanding the portfolio before comparing it</h2>
+    <p>
+      The first thing the analysis established was the portfolio's own internal structure - before any external benchmark was applied. Three observations from the composition alone shaped the rest of the work.
+    </p>
+    <p>
+      Denmark holds 270 MW in just two assets, meaning a single event at Anholt East has an outsized portfolio effect. Germany has six assets but only 245 MW combined - less than Nordsee Alpha and Anholt East together. The portfolio's financial weight sits heavily in offshore wind, which carries capacity factors of 38-40% versus 23-29% for onshore - but also higher exposure to grid curtailment, which in 2023 became a material issue in the Dutch market specifically.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">Installed Capacity by Country and Technology</div>
+          <div class="chart-sub">Where is the portfolio's scale concentrated?</div>
+        </div>
+        <div class="chart-num">Chart 1 of 4</div>
+      </div>
+      <div style="height:280px; position:relative"><canvas id="chart1"></canvas></div>
+      <div class="legend">
+        <div class="legend-item"><div class="leg-box" style="background:#FFB347"></div>Solar PV</div>
+        <div class="legend-item"><div class="leg-box" style="background:#5B9BD5"></div>Onshore Wind</div>
+        <div class="legend-item"><div class="leg-box" style="background:#1F4E79"></div>Offshore Wind</div>
+      </div>
+    </div>
+
+    <div class="finding">
+      <strong>What this establishes</strong>
+      Two assets - Nordsee Alpha (120 MW, NL) and Anholt East (150 MW, DK) - represent 37% of total installed capacity and will account for a disproportionate share of revenue. Any performance shortfall in either will matter more financially than the same percentage shortfall in a smaller onshore asset. This observation becomes the deciding factor in Step 4.
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- STEP 2 -->
+  <div class="section">
+    <div class="section-marker">Analysis · Step 2</div>
+    <h2>Which assets are not generating what they should?</h2>
+    <p>
+      The performance metric used is capacity factor, which measures actual generation as a share of theoretical maximum. The reference point is not a portfolio average but the country and technology specific benchmark drawn from Bruegel and ENTSO-E data. This distinction matters: German onshore wind has a lower benchmark CF than Danish offshore not because it is performing poorly, but because it operates in lower-wind inland locations. A single portfolio average would systematically penalise assets in stronger wind markets while masking genuine underperformance in weaker ones.
+    </p>
+    <p>
+      Capacity factor benchmarking is constructed using country and technology specific reference values. Each asset is evaluated against its relevant peer group rather than a single portfolio average, ensuring that differences in wind resource, technology maturity, asset age, and geography are correctly accounted for.
+    </p>
+    <p>
+      Three assets show gaps of more than three percentage points below their respective benchmarks. Two are German onshore assets commissioned in 2015 and 2016. The third - and the one that prompted the most scrutiny - is Nordsee Alpha, a Dutch offshore installation commissioned in 2023. A brand-new asset underperforming its benchmark by 3.8 percentage points is not what the development team expected.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">Actual Capacity Factor vs Country-Technology Benchmark</div>
+          <div class="chart-sub">Sorted from largest deficit to strongest outperformance</div>
+        </div>
+        <div class="chart-num">Chart 2 of 4</div>
+      </div>
+      <div style="height:360px; position:relative"><canvas id="chart2"></canvas></div>
+      <div class="legend">
+        <div class="legend-item"><div class="leg-box" style="background:#1C3F6E; opacity:0.85"></div>Germany</div>
+        <div class="legend-item"><div class="leg-box" style="background:#C07A1A; opacity:0.85"></div>Netherlands</div>
+        <div class="legend-item"><div class="leg-box" style="background:#2E7D55; opacity:0.85"></div>Denmark</div>
+        <div class="legend-item"><div class="leg-box" style="background:#bbb"></div>Benchmark</div>
+      </div>
+    </div>
+
+    <div class="alert">
+      <strong>Three assets below threshold</strong>
+      <strong>Elbewind (Germany, commissioned 2015):</strong> 18.4% actual vs 23.0% benchmark - a gap of 4.6pp on an asset now in its ninth year of operation. Aging equipment is the likely factor, but the scale of the gap warrants a formal O&M investigation.<br><br>
+      <strong>Nordwind I (Germany, commissioned 2016):</strong> 18.6% actual vs 23.0% benchmark. Similar vintage and similar gap to Elbewind. Two assets from the same era showing the same pattern in the same country is a signal that needs to be followed.<br><br>
+      <strong>Nordsee Alpha (Netherlands, commissioned 2023):</strong> 34.2% actual vs 38.0% benchmark. The gap on a new asset with modern turbines does not fit the aging-equipment explanation that applies to the German assets. A different cause needs to be identified - which is what Step 3 examines.
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- STEP 3 -->
+  <div class="section">
+    <div class="section-marker">Analysis · Step 3</div>
+    <h2>The same gap, two completely different problems</h2>
+    <p>
+      A capacity factor shortfall is a symptom. It does not identify the cause. The next step was to disaggregate downtime into four categories: planned maintenance (scheduled, managed within O&M contracts), unplanned mechanical (equipment failures and unscheduled stops), grid curtailment (TSO instruction to limit output), and weather or force majeure. The reason for this separation is straightforward - the O&M contractor is responsible for mechanical reliability but has no role in grid curtailment, which is a TSO and regulatory matter.
+    </p>
+    <p>
+      The WindEurope O&M benchmark for onshore wind sets unplanned mechanical downtime at approximately 263 hours per year. Assets significantly above this figure have an internal operations problem. Assets whose downtime profile is dominated by curtailment have an infrastructure and regulatory problem.
+    </p>
+    <p>
+      The timing of downtime events also matters. Mechanical failures tend to be sporadic and asset-specific, while curtailment follows system-wide grid congestion patterns. This distinction determines whether the response lies within the operator's control or requires regulatory engagement.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">Annual Downtime by Category</div>
+          <div class="chart-sub">Sorted by total controllable losses - unplanned mechanical plus grid curtailment</div>
+        </div>
+        <div class="chart-num">Chart 3 of 4</div>
+      </div>
+      <div style="height:380px; position:relative"><canvas id="chart3"></canvas></div>
+      <div class="legend">
+        <div class="legend-item"><div class="leg-box" style="background:#C0392B"></div>Unplanned Mechanical</div>
+        <div class="legend-item"><div class="leg-box" style="background:#F5A623"></div>Grid Curtailment</div>
+        <div class="legend-item"><div class="leg-box" style="background:#7EB8D4"></div>Planned Maintenance</div>
+        <div class="legend-item"><div class="leg-box" style="background:#B0BEC5"></div>Weather</div>
+      </div>
+    </div>
+
+    <div class="finding">
+      <strong>What the breakdown reveals</strong>
+      Elbewind's 480 hours of unplanned mechanical downtime - nearly double the WindEurope benchmark of 263 hours - confirms that its underperformance is an O&M reliability problem. The contractor needs to be challenged on component failure rates and response SLAs. The 2015 vintage suggests drivetrain and gearbox wear may be driving the elevated downtime.<br><br>
+      Nordsee Alpha's picture is entirely different. Its unplanned mechanical hours are elevated but not exceptional. The dominant source of its lost generation is 420 hours of grid curtailment - the TSO instructing the asset to reduce output because the onshore transmission network cannot absorb what the asset is generating. This is a documented structural issue across Dutch offshore wind in 2023, confirmed in RWE's annual disclosure. The correct response is regulatory engagement and curtailment compensation negotiation with the TSO - not a conversation with the O&M team. Treating these two assets as the same type of problem, based only on their CF gaps, would have directed effort and budget at the wrong place.
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- STEP 4 -->
+  <div class="section">
+    <div class="section-marker">Analysis · Step 4</div>
+    <h2>What it costs in euros</h2>
+    <p>
+      Capacity factor gaps and downtime hours are the right language for operational discussions. For the board and for investors, the relevant unit is revenue. Translating the operational picture into financial terms also changes the priority order in a way that percentage gaps alone do not show.
+    </p>
+    <p>
+      Revenue is modelled as generation multiplied by a technology-specific capture price. Renewable assets do not receive the full average wholesale price - solar generation concentrates at midday and depresses prices at precisely the hours it produces most; offshore wind spreads generation more evenly but still faces partial cannibalisation. Capture rates applied are Solar PV at 85%, Offshore Wind at 90%, and Onshore Wind at 92% of the average wholesale price, following the Bruegel EU Renewables Value Tracker methodology. Wholesale price references are from ENTSO-E and Ember: Germany €95/MWh, Netherlands €100/MWh, Denmark €90/MWh.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">Annual Revenue Gap vs Target by Asset</div>
+          <div class="chart-sub">Actual minus target revenue at benchmark capacity factor (€ million)</div>
+        </div>
+        <div class="chart-num">Chart 4 of 4</div>
+      </div>
+      <div style="height:360px; position:relative"><canvas id="chart4"></canvas></div>
+    </div>
+
+    <div class="kpi-strip">
+      <div class="kpi">
+        <div class="kpi-label">Total Revenue Gap</div>
+        <div class="kpi-val red">€4.49M</div>
+        <div class="kpi-desc">Full portfolio shortfall against benchmark target</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Nordsee Alpha Alone</div>
+        <div class="kpi-val red">€3.62M</div>
+        <div class="kpi-desc">81% of total gap. Driven by grid curtailment, not mechanical failure.</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Target Revenue</div>
+        <div class="kpi-val blue">€155.8M</div>
+        <div class="kpi-desc">Portfolio at benchmark CFs across all 12 assets</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Best Performer</div>
+        <div class="kpi-val green">Anholt East</div>
+        <div class="kpi-desc">+€1.1M above target. DK offshore at 42.0% vs 40.0% benchmark.</div>
+      </div>
+    </div>
+
+    <div class="finding">
+      <strong>Why scale changes the priority order</strong>
+      Elbewind has a larger percentage CF gap than Nordsee Alpha - 4.6pp versus 3.8pp. In a purely operational ranking, Elbewind looks worse. But Nordsee Alpha is a 120 MW offshore asset at €100/MWh. Elbewind is a 30 MW onshore asset at €95/MWh. The same one percentage point of underperformance produces roughly six times more revenue loss at Nordsee Alpha than at Elbewind. Nordsee Alpha's curtailment problem costs €3.62M annually; Elbewind's O&M problem costs €1.06M. Both are real - but they are not equally urgent, and the financial translation makes that visible in a way that percentage gaps alone do not.
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- RECOMMENDATIONS -->
+  <div class="section">
+    <div class="section-marker">Recommendations</div>
+    <h2>What the analysis points to</h2>
+    <p>
+      Four actions follow directly from the findings. They are ordered by financial impact and controllability, not operational complexity. Large-scale revenue losses with clear external drivers are addressed first, followed by operational improvements within the company's control.
+    </p>
+
+    <div class="rec-list">
+      <div class="rec">
+        <div class="rec-n">1</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-urgent">Immediate</span>
+          <h4 class="urgent">Escalate Nordsee Alpha curtailment with the TSO</h4>
+          <p>420 hours of curtailment in the first year of a new offshore installation represents €3.62M in lost revenue. The TSO should be engaged on curtailment compensation under current Dutch regulatory provisions. If curtailment continues at this level into Year 2, the issue should be escalated through industry channels. This is not an O&M problem and should not be treated as one.</p>
+          <p>Expected impact: recovery of €2M to €3M annually through curtailment compensation or reduced grid restrictions, depending on regulatory outcome.</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="rec-n">2</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-short">Short Term</span>
+          <h4>Conduct formal O&amp;M review for Elbewind and Nordwind I</h4>
+          <p>Two 2015 to 2016 vintage assets both showing unplanned mechanical hours well above the WindEurope benchmark is a pattern that warrants formal review. Both assets should undergo technical audit. The case for targeted repowering, including replacement of aging drivetrain and rotor components, should be assessed against the cost of continued degraded performance at the current O&M contract terms.</p>
+          <p>Expected impact: €0.8M to €1.2M annual recovery through reduced unplanned downtime and improved availability.</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="rec-n">3</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-medium">Medium Term</span>
+          <h4>Standardise KPI definitions across all country teams</h4>
+          <p>The reason the board had no answer is not the absence of data. It is the absence of common definitions. Six KPIs should be standardised across Germany, the Netherlands, and Denmark: capacity factor vs benchmark, mechanical availability, unplanned downtime hours, grid curtailment hours, generation vs budget, and capture price vs market average. Monthly unified reporting against these definitions becomes the minimum operating standard.</p>
+          <p>Expected impact: faster identification of performance drift and fewer delayed escalations, reducing the time from issue detection to management action.</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="rec-n">4</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-ongoing">Ongoing</span>
+          <h4>Set early warning thresholds to shift from reactive to proactive monitoring</h4>
+          <p>Problems detected at board review rather than when they first appear are a structural monitoring failure. Alert thresholds should be set at asset level: CF more than 3pp below monthly benchmark triggers automatic review; unplanned mechanical hours above 50 per month flags for O&M escalation. This analysis is the diagnostic foundation; the monitoring system it should lead to prevents the same conversation from being needed again in twelve months.</p>
+          <p>Expected impact: earlier intervention on asset underperformance, lower revenue leakage, and more consistent board-level reporting.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ASSUMPTIONS -->
+  <div class="section">
+    <div class="section-marker">Model Notes</div>
+    <h2>Assumptions and limitations</h2>
+    <p>
+      The analysis is based on a constructed asset-level dataset calibrated to public benchmarks. Actual asset performance data is proprietary and not publicly disclosed.
+    </p>
+    <p>
+      Capacity factor benchmarks are derived from country-level and technology-level averages. They may not fully capture micro-location differences such as wind resource variability, site-specific constraints, turbine model differences, or local grid conditions.
+    </p>
+    <p>
+      Revenue calculations assume stable wholesale prices and fixed capture rates. In reality, price volatility, cannibalisation effects, and power purchase agreement terms may alter realised revenues.
+    </p>
+    <p>
+      Curtailment estimates are based on publicly reported market conditions and comparable operator disclosures. Actual curtailment exposure may vary depending on grid conditions, dispatch rules, and compensation arrangements.
+    </p>
+  </div>
+
+  <hr>
+
+  <!-- REFERENCES -->
+  <div class="section">
+    <div class="section-marker">References</div>
+    <h2>Full citations</h2>
+    <ul style="font-size:13.5px; color:var(--muted); line-height:2.2; padding-left:18px">
+      <li>Bruegel (2024). <em>EU Renewables Value Tracker</em>. Brussels: Bruegel Institute. Data sourced from ENTSO-E Transparency Platform.</li>
+      <li>ENTSO-E (2024). <em>Statistical Factsheet 2023</em>. Brussels: European Network of Transmission System Operators for Electricity.</li>
+      <li>WindEurope (2024). <em>Wind Energy in Europe: 2023 Statistics and Outlook 2024-2030</em>. Brussels: WindEurope.</li>
+      <li>WindEurope (2023). <em>Financing and Investment Trends: O&M and Digitalization Report</em>. Brussels: WindEurope.</li>
+      <li>Copernicus Climate Change Service / ECMWF (2023). <em>European State of the Climate 2023 - Renewable Energy Resources</em>. Reading: ECMWF.</li>
+      <li>Ember (2024). <em>European Electricity Review 2024</em>. London: Ember Climate.</li>
+      <li>RWE AG (2024). <em>Annual Report 2023</em>. Essen: RWE.</li>
+      <li>IRENA (2024). <em>Renewable Capacity Statistics 2024</em>. Abu Dhabi: International Renewable Energy Agency.</li>
+    </ul>
+  </div>
+
+</div>
+
+<footer>
+  <span>Business Analyst Portfolio · Shivam Asthana · Energy Case 04</span>
+  <a href="#">← Back to Portfolio</a>
+</footer>
+
+<script>
+const assets = [
+  { name:'Nordwind I',    country:'Germany',     tech:'Onshore Wind',  cap:45,  benchCF:0.23, actualCF:0.186, planned:180, unplanned:320, curtail:60,  weather:40  },
+  { name:'Nordwind II',   country:'Germany',     tech:'Onshore Wind',  cap:60,  benchCF:0.23, actualCF:0.223, planned:160, unplanned:95,  curtail:80,  weather:35  },
+  { name:'Elbewind',      country:'Germany',     tech:'Onshore Wind',  cap:30,  benchCF:0.23, actualCF:0.184, planned:200, unplanned:480, curtail:40,  weather:30  },
+  { name:'Sachsenwind',   country:'Germany',     tech:'Onshore Wind',  cap:50,  benchCF:0.23, actualCF:0.237, planned:120, unplanned:60,  curtail:90,  weather:25  },
+  { name:'Sonnfeld I',    country:'Germany',     tech:'Solar PV',      cap:25,  benchCF:0.11, actualCF:0.098, planned:80,  unplanned:55,  curtail:0,   weather:20  },
+  { name:'Sonnfeld II',   country:'Germany',     tech:'Solar PV',      cap:35,  benchCF:0.11, actualCF:0.104, planned:70,  unplanned:40,  curtail:0,   weather:15  },
+  { name:'Kustwind',      country:'Netherlands', tech:'Onshore Wind',  cap:55,  benchCF:0.26, actualCF:0.246, planned:170, unplanned:110, curtail:70,  weather:45  },
+  { name:'Nordsee Alpha', country:'Netherlands', tech:'Offshore Wind', cap:120, benchCF:0.38, actualCF:0.342, planned:210, unplanned:350, curtail:420, weather:80  },
+  { name:'Randstad Solar',country:'Netherlands', tech:'Solar PV',      cap:40,  benchCF:0.11, actualCF:0.104, planned:65,  unplanned:45,  curtail:0,   weather:18  },
+  { name:'Vesterhav',     country:'Denmark',     tech:'Onshore Wind',  cap:70,  benchCF:0.29, actualCF:0.271, planned:190, unplanned:180, curtail:50,  weather:55  },
+  { name:'Jutland Wind',  country:'Denmark',     tech:'Onshore Wind',  cap:50,  benchCF:0.29, actualCF:0.296, planned:140, unplanned:75,  curtail:60,  weather:40  },
+  { name:'Anholt East',   country:'Denmark',     tech:'Offshore Wind', cap:150, benchCF:0.40, actualCF:0.420, planned:220, unplanned:90,  curtail:110, weather:70  },
+];
+
+const priceMap   = { Germany:95, Netherlands:100, Denmark:90 };
+const captureMap = { 'Onshore Wind':0.92, 'Offshore Wind':0.90, 'Solar PV':0.85 };
+const cColor     = { Germany:'#1C3F6E', Netherlands:'#C07A1A', Denmark:'#2E7D55' };
+
+assets.forEach(a => {
+  const cp    = priceMap[a.country] * captureMap[a.tech];
+  a.targetRev = a.cap * a.benchCF  * 8760 * cp;
+  a.actualRev = a.cap * a.actualCF * 8760 * cp;
+  a.revGap    = a.actualRev - a.targetRev;
+  a.cfGapPp   = (a.actualCF - a.benchCF) * 100;
+});
+
+Chart.defaults.font.family = "'Source Sans 3', sans-serif";
+Chart.defaults.color = '#555';
+
+// Chart 1
+(function(){
+  const countries = ['Germany','Netherlands','Denmark'];
+  const techs = ['Solar PV','Onshore Wind','Offshore Wind'];
+  const tc = {'Solar PV':'#FFB347','Onshore Wind':'#5B9BD5','Offshore Wind':'#1F4E79'};
+  new Chart(document.getElementById('chart1'),{
+    type:'bar',
+    data:{
+      labels:countries,
+      datasets:techs.map(t=>({
+        label:t, backgroundColor:tc[t],
+        data:countries.map(c=>assets.filter(a=>a.country===c&&a.tech===t).reduce((s,a)=>s+a.cap,0))
+      }))
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{stacked:true,grid:{display:false}},
+        y:{stacked:true,title:{display:true,text:'Installed Capacity (MW)'},grid:{color:'#eee'}}
+      }
+    }
+  });
+})();
+
+// Chart 2
+(function(){
+  const s = [...assets].sort((a,b)=>a.cfGapPp-b.cfGapPp);
+  new Chart(document.getElementById('chart2'),{
+    type:'bar',
+    data:{
+      labels:s.map(a=>a.name),
+      datasets:[
+        {label:'Actual CF (%)', data:s.map(a=>(a.actualCF*100).toFixed(1)),
+         backgroundColor:s.map(a=>cColor[a.country]+'DD'), borderRadius:2},
+        {label:'Benchmark CF (%)', data:s.map(a=>(a.benchCF*100).toFixed(1)),
+         backgroundColor:'#ccc7', borderColor:'#999', borderWidth:1, borderRadius:2}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{afterLabel:ctx=>`Gap: ${s[ctx.dataIndex].cfGapPp>0?'+':''}${s[ctx.dataIndex].cfGapPp.toFixed(1)}pp`}}
+      },
+      scales:{
+        x:{grid:{display:false},ticks:{font:{size:11},maxRotation:30}},
+        y:{title:{display:true,text:'Capacity Factor (%)'},grid:{color:'#eee'},max:55}
+      }
+    }
+  });
+})();
+
+// Chart 3
+(function(){
+  const s = [...assets].sort((a,b)=>(b.unplanned+b.curtail)-(a.unplanned+a.curtail));
+  new Chart(document.getElementById('chart3'),{
+    type:'bar',
+    data:{
+      labels:s.map(a=>a.name),
+      datasets:[
+        {label:'Unplanned Mechanical', data:s.map(a=>a.unplanned), backgroundColor:'#C0392B'},
+        {label:'Grid Curtailment',     data:s.map(a=>a.curtail),   backgroundColor:'#F5A623'},
+        {label:'Planned Maintenance',  data:s.map(a=>a.planned),   backgroundColor:'#7EB8D4'},
+        {label:'Weather',              data:s.map(a=>a.weather),   backgroundColor:'#B0BEC5'},
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
+      scales:{
+        x:{stacked:true,grid:{display:false},ticks:{font:{size:11},maxRotation:30}},
+        y:{stacked:true,title:{display:true,text:'Hours per Year'},grid:{color:'#eee'}}
+      }
+    }
+  });
+})();
+
+// Chart 4
+(function(){
+  const s = [...assets].sort((a,b)=>a.revGap-b.revGap);
+  new Chart(document.getElementById('chart4'),{
+    type:'bar',
+    data:{
+      labels:s.map(a=>a.name),
+      datasets:[{
+        label:'Revenue Gap (€M)',
+        data:s.map(a=>(a.revGap/1e6).toFixed(3)),
+        backgroundColor:s.map(a=>a.revGap<0?'#C0392B':'#2E7D55'),
+        borderRadius:2
+      }]
+    },
+    options:{
+      indexAxis:'y',
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>`€${parseFloat(ctx.raw)>=0?'+':''}${ctx.raw}M`}}
+      },
+      scales:{
+        x:{title:{display:true,text:'Revenue Gap vs Target (€ million)'},grid:{color:'#eee'}},
+        y:{grid:{display:false},ticks:{font:{size:11}}}
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>

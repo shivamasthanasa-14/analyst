@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Why Are We Losing HCPs? - Fragmented Data and Declining Engagement</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Source+Sans+3:wght@300;400;500;600&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#FAFAF7; --surface:#FFFFFF; --border:#E8E6DF; --border2:#D0CEC6; --text:#181818; --muted:#6B6860; --faint:#9B9890; --accent:#1C3F6E; --green:#2E7D55; --red:#C0392B; --amber:#C07A1A; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: 'Source Sans 3', sans-serif; font-weight: 300; line-height: 1.8; font-size: 16px; }
+  nav { position: sticky; top: 0; z-index: 100; background: rgba(250,250,247,0.95); backdrop-filter: blur(6px); border-bottom: 1px solid var(--border); padding: 12px 48px; display: flex; align-items: center; justify-content: space-between; }
+  .nav-left { display: flex; align-items: center; gap: 10px; }
+  nav a { color: var(--muted); text-decoration: none; font-size: 13px; }
+  nav a:hover { color: var(--text); }
+  nav .sep { color: var(--border2); font-size: 12px; }
+  nav .current { color: var(--text); font-weight: 500; font-size: 13px; }
+  .nav-tag { font-family: 'Source Code Pro', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border: 1px solid var(--border2); color: var(--muted); border-radius: 2px; }
+  .hero { max-width: 800px; margin: 72px auto 0; padding: 0 48px; }
+  .case-label { font-family: 'Source Code Pro', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+  .case-label::after { content: ''; display: block; flex: 1; height: 1px; background: var(--border); max-width: 60px; }
+  h1 { font-family: 'Playfair Display', serif; font-size: clamp(30px, 4.5vw, 48px); line-height: 1.15; font-weight: 400; margin-bottom: 22px; letter-spacing: -0.02em; }
+  h1 em { font-style: italic; color: var(--accent); }
+  .hero-deck { font-size: 18px; color: var(--muted); font-weight: 300; line-height: 1.6; max-width: 640px; margin-bottom: 36px; }
+  .meta-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); border: 1px solid var(--border); border-radius: 3px; margin-bottom: 64px; overflow: hidden; }
+  .meta-cell { padding: 16px 20px; border-right: 1px solid var(--border); }
+  .meta-cell:last-child { border-right: none; }
+  .meta-cell label { display: block; font-family: 'Source Code Pro', monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); margin-bottom: 4px; }
+  .meta-cell span { font-size: 13px; font-weight: 500; }
+  .content { max-width: 800px; margin: 0 auto; padding: 0 48px 96px; }
+  .section { margin-bottom: 72px; }
+  .section-marker { font-family: 'Source Code Pro', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); margin-bottom: 12px; }
+  h2 { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 400; line-height: 1.25; margin-bottom: 20px; letter-spacing: -0.01em; }
+  h3 { font-family: 'Source Sans 3', sans-serif; font-size: 15px; font-weight: 600; margin: 28px 0 10px; }
+  p { margin-bottom: 18px; color: #2e2e2e; font-size: 15.5px; }
+  p:last-child { margin-bottom: 0; }
+  .source-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 20px 0; }
+  .source-table th { font-family: 'Source Code Pro', monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); padding: 10px 14px; border-bottom: 2px solid var(--border); text-align: left; font-weight: 500; }
+  .source-table td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.55; }
+  .source-table tr:last-child td { border-bottom: none; }
+  .source-name { font-weight: 500; color: var(--accent); }
+  .source-limit { font-size: 12px; color: var(--muted); margin-top: 3px; font-style: italic; }
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 20px 0; background: var(--surface); border: 1px solid var(--border); border-radius: 3px; overflow: hidden; }
+  .data-table th { font-family: 'Source Code Pro', monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); padding: 11px 14px; border-bottom: 2px solid var(--border); text-align: left; font-weight: 500; background: #F5F4F0; }
+  .data-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: #F9F8F5; }
+  .mono { font-family: 'Source Code Pro', monospace; font-size: 12px; }
+  .badge { display: inline-block; padding: 2px 7px; border-radius: 2px; font-size: 11px; font-weight: 500; }
+  .b-red { background: #FDF0EF; color: #C0392B; }
+  .b-green { background: #EBF5EF; color: #2E7D55; }
+  .b-amber { background: #FDF5E6; color: #C07A1A; }
+  .b-blue { background: #EBF0F8; color: #1C3F6E; }
+  .chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 3px; padding: 28px 28px 20px; margin: 24px 0; }
+  .chart-title-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); gap: 16px; flex-wrap: wrap; }
+  .chart-title { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 400; }
+  .chart-sub { font-size: 12px; color: var(--muted); font-style: italic; margin-top: 3px; }
+  .chart-num { font-family: 'Source Code Pro', monospace; font-size: 10px; color: var(--faint); white-space: nowrap; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; margin-top: 14px; color: var(--muted); }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .leg-box { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; }
+  .finding { border-left: 3px solid var(--accent); background: #F0F4FA; padding: 18px 22px; border-radius: 0 3px 3px 0; margin: 24px 0; font-size: 14.5px; color: #1a2a3a; line-height: 1.7; }
+  .finding strong { display: block; font-weight: 600; margin-bottom: 8px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+  .alert { border-left: 3px solid var(--red); background: #FDF0EF; padding: 18px 22px; border-radius: 0 3px 3px 0; margin: 24px 0; font-size: 14.5px; color: #2a1010; line-height: 1.7; }
+  .alert strong { display: block; font-weight: 600; margin-bottom: 8px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--red); }
+  .note { border-left: 3px solid var(--border2); background: #F5F4F0; padding: 14px 20px; border-radius: 0 3px 3px 0; margin: 18px 0; font-size: 13.5px; color: var(--muted); line-height: 1.65; }
+  .kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 3px; overflow: hidden; margin: 28px 0; }
+  .kpi { background: var(--surface); padding: 20px; }
+  .kpi-label { font-family: 'Source Code Pro', monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); margin-bottom: 8px; }
+  .kpi-val { font-family: 'Playfair Display', serif; font-size: 28px; line-height: 1; font-weight: 400; margin-bottom: 5px; }
+  .kpi-val.red { color: var(--red); }
+  .kpi-val.green { color: var(--green); }
+  .kpi-val.blue { color: var(--accent); }
+  .kpi-val.amber { color: var(--amber); }
+  .kpi-desc { font-size: 12px; color: var(--muted); line-height: 1.4; }
+  .pull { font-family: 'Playfair Display', serif; font-size: 20px; font-style: italic; line-height: 1.5; color: var(--accent); border-top: 2px solid var(--accent); border-bottom: 1px solid var(--border); padding: 22px 0; margin: 36px 0; }
+  .rec-list { margin: 24px 0; }
+  .rec { display: grid; grid-template-columns: 36px 1fr; gap: 16px; padding: 20px 0; border-bottom: 1px solid var(--border); align-items: start; }
+  .rec:last-child { border-bottom: none; }
+  .rec-n { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--border2); line-height: 1; padding-top: 4px; }
+  .rec-body h4 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .rec-body h4.urgent { color: var(--red); }
+  .rec-body p { font-size: 14px; color: var(--muted); margin: 0; line-height: 1.6; }
+  .rec-tag { display: inline-block; font-family: 'Source Code Pro', monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 7px; border-radius: 2px; margin-bottom: 6px; }
+  .tag-urgent { background: #FDF0EF; color: var(--red); }
+  .tag-short  { background: #FDF5E6; color: var(--amber); }
+  .tag-medium { background: #EBF5EF; color: var(--green); }
+  .tag-ongoing { background: #EBF0F8; color: var(--accent); }
+  hr { border: none; border-top: 1px solid var(--border); margin: 56px 0; }
+  .footnote { font-family: 'Source Code Pro', monospace; font-size: 11px; color: var(--faint); margin-top: 10px; line-height: 1.6; }
+  footer { border-top: 1px solid var(--border); padding: 28px 48px; display: flex; justify-content: space-between; align-items: center; font-family: 'Source Code Pro', monospace; font-size: 11px; color: var(--faint); flex-wrap: wrap; gap: 8px; }
+  footer a { color: var(--faint); text-decoration: none; }
+  footer a:hover { color: var(--text); }
+  .flow-box { background: var(--surface); border: 1px solid var(--border); border-radius: 3px; padding: 20px 24px; margin: 20px 0; }
+  .flow-row { display: flex; align-items: center; gap: 0; margin-bottom: 10px; flex-wrap: wrap; }
+  .flow-node { background: #EBF0F8; border: 1px solid #B8CADF; border-radius: 3px; padding: 8px 14px; font-size: 12.5px; font-weight: 500; color: var(--accent); }
+  .flow-gap { flex: 1; height: 1px; background: var(--border2); min-width: 16px; position: relative; }
+  .flow-gap.broken { border-top: 2px dashed var(--red); background: none; }
+  .flow-gap-label { font-family: 'Source Code Pro', monospace; font-size: 10px; color: var(--red); text-align: center; margin-top: -14px; display: block; }
+
+  /* ── DOWNLOAD BAR ── */
+  .download-bar {
+    background: #F0F4FA;
+    border-top: 1px solid #D6E4F0;
+    border-bottom: 1px solid #D6E4F0;
+    padding: 14px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .download-bar-left {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 11px; letter-spacing: 0.06em;
+    color: #6B6860;
+  }
+  .download-bar-left svg { flex-shrink: 0; }
+  .download-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #C07A1A;
+    color: #fff; text-decoration: none;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.06em;
+    padding: 9px 18px;
+    border-radius: 2px;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .download-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <a href="#">Portfolio</a>
+    <span class="sep">›</span>
+    <a href="#">Pharma &amp; Life Sciences</a>
+    <span class="sep">›</span>
+    <span class="current">HCP Engagement Data Analysis</span>
+  </div>
+  <div class="nav-tag">Case Study 06 · Pharma</div>
+</nav>
+
+<div class="hero">
+  <div class="case-label">Pharma &amp; Life Sciences · Commercial Operations</div>
+  <h1>Why Are We Losing HCPs? - <em>Data Fragmentation and the Engagement Gap</em></h1>
+  <p class="hero-deck">
+    A mid-sized European pharmaceutical company's HCP engagement had declined for three consecutive years. The data to understand why was spread across four systems in three functions. Nobody owned the full picture.
+  </p>
+  <p class="hero-deck" style="margin-top:-18px;">
+    The most valuable gap was not total engagement decline. It was 287 unreached Tier 1 HCPs, representing roughly €5.7M of relationship value at risk under conservative assumptions.
+  </p>
+  <div class="meta-strip">
+    <div class="meta-cell"><label>Sector</label><span>Pharma Commercial</span></div>
+    <div class="meta-cell"><label>HCPs in Scope</label><span>4,200 active</span></div>
+    <div class="meta-cell"><label>Engagement Drop</label><span>–34% over 3 yrs</span></div>
+    <div class="meta-cell"><label>Systems</label><span>4 across 3 functions</span></div>
+    <div class="meta-cell"><label>Data Conflicts</label><span>1,140 HCP records</span></div>
+  </div>
+</div>
+
+<div class="download-bar">
+  <div class="download-bar-left">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <rect x="1.5" y="1.5" width="13" height="13" rx="1.5" stroke="#C07A1A" stroke-width="1.2"/>
+      <path d="M5 7.5h6M5 5h4M5 10h3" stroke="#C07A1A" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>
+    This case includes a downloadable Excel workbook - data model, calculations, and dashboard.
+  </div>
+  <a href="Pharma_Case2_HCP_Engagement.xlsx" download class="download-btn">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <path d="M6.5 1v8M3.5 6.5l3 3 3-3M1 11h11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Download Excel Working File
+  </a>
+</div>
+
+<div class="content">
+
+  <div class="section">
+    <div class="section-marker">Context</div>
+    <h2>Why this problem matters</h2>
+    <p>
+      Healthcare professional engagement is the primary commercial lever for prescription pharmaceutical products. In most European markets, detailing visits, medical education events, and advisory board participation collectively drive brand awareness, prescribing intent, and the informal networks through which clinical practice evolves. When HCP engagement declines, commercial performance typically follows - with a lag of twelve to eighteen months.
+    </p>
+    <p>
+      The challenge for most pharmaceutical companies is not a lack of HCP data but an excess of incompatible data. Sales forces maintain contact records in CRM systems optimised for visit scheduling. Medical affairs teams track scientific exchange activities separately, often in standalone databases. Marketing logs event attendance and digital engagement in yet another system. When these systems do not talk to each other - and the HCP records within them do not consistently identify the same individuals - the company loses the ability to understand, at the HCP level, what relationship it actually has.
+    </p>
+    <p>
+      This case examines exactly that breakdown: a company with 4,200 active HCPs across five European markets whose aggregate engagement metrics were falling. Leadership attributed the decline to market conditions, but the analysis showed a more controllable problem: the wrong HCPs were being targeted, high-value segments were under-served, and key touchpoints were not coordinated across functions.
+    </p>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">Data Foundation</div>
+    <h2>Data sources and their role in this analysis</h2>
+
+    <table class="source-table">
+      <thead>
+        <tr><th>Source</th><th>What it provided</th><th>Used for</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="source-name">IQVIA HCP Universe / OneKey Reference Data</div>
+            <div class="source-limit">Gold-standard EU HCP reference; updated quarterly. Access requires commercial agreement.</div>
+          </td>
+          <td>Verified HCP profiles including specialty, practice setting, prescribing tier, and affiliation across EU markets.</td>
+          <td>Benchmark for HCP segmentation criteria and validation of company CRM coverage.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">Veeva Pulse / Salesforce CRM Benchmarks 2023</div>
+            <div class="source-limit">Aggregated across client base. Not disaggregated by therapy area or company size.</div>
+          </td>
+          <td>Industry benchmark engagement rates: average visit frequency by HCP tier, digital engagement open rates, KOL interaction rates.</td>
+          <td>Comparator for engagement frequency and channel mix against company actuals.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">EFPIA HCP Transparency Data 2022–2023</div>
+            <div class="source-limit">Covers transfers of value only; does not capture non-financial engagements or educational activities.</div>
+          </td>
+          <td>Declared transfers of value (consultancy fees, event sponsorship, grants) from European pharma companies to HCPs.</td>
+          <td>Cross-check on competitor HCP engagement patterns in the company's therapy areas.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">EMA / National Agency HCP Prescribing Structure Data</div>
+            <div class="source-limit">Publicly available only in aggregated form. Individual HCP prescribing requires commercial data licences.</div>
+          </td>
+          <td>Specialty distribution and prescribing volume benchmarks by country and therapy area.</td>
+          <td>HCP tier weighting and segmentation framework for target list validation.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">The Situation</div>
+    <h2>What the company was facing</h2>
+    <p>
+      Over the three years preceding the analysis, the company's measured HCP engagement - defined as meaningful interactions logged across any commercial or medical channel - had declined by 34%. Face-to-face detailing visits were down 41%. Medical education attendance was down 28%. Digital engagement (email open rates, portal logins) was down 22%.
+    </p>
+
+    <div class="pull">
+      "Three teams each had data on HCPs. None of them could tell you what a given doctor had experienced from the company in the past twelve months."
+    </div>
+
+    <p>
+      The company's commercial leadership had attributed the decline primarily to post-COVID behaviour change - a structural shift toward reduced access for reps - and to competitive pressure as two new branded entrants gained market share. Neither explanation was wrong, but neither was complete, and neither was testable with the data as it stood.
+    </p>
+    <p>
+      The data landscape consisted of four systems: Veeva CRM, a standalone Medical Affairs event platform, Salesforce Marketing Cloud, and a global HCP master data management system. The business problem was not simply system fragmentation. It was that fragmentation had changed commercial behaviour: call lists were stale, opt-out signals were not enforced consistently, and high-value HCPs were becoming invisible to the organisation.
+    </p>
+
+    <div class="kpi-strip">
+      <div class="kpi">
+        <div class="kpi-label">Engagement Decline (3yr)</div>
+        <div class="kpi-val red">–34%</div>
+        <div class="kpi-desc">Across all channels - face-to-face, medical education, digital</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Conflicting HCP Records</div>
+        <div class="kpi-val amber">1,140</div>
+        <div class="kpi-desc">HCPs appearing with different names, specialties, or affiliations across two or more systems</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Systems in Use</div>
+        <div class="kpi-val blue">4</div>
+        <div class="kpi-desc">Across Sales, Medical Affairs, and Marketing - none fully synchronised</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">High-Value HCPs Not Reached</div>
+        <div class="kpi-val red">38%</div>
+        <div class="kpi-desc">Tier 1 prescribers with zero logged contact in the preceding 12 months</div>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">Analysis · Step 1</div>
+    <h2>Mapping the data flow - where does HCP information actually travel?</h2>
+    <p>
+      Before asking what the data shows, the first step was to establish what the data flow actually looked like: where HCP records originate, how they move between systems, where they are enriched or updated, and - critically - where they diverge. A data flow map is not a system architecture diagram. It traces the movement of a specific data entity (an HCP record) through an organisation's processes, and identifies where the entity is duplicated, modified, or left stale.
+    </p>
+    <p>
+      The mapping exercise involved structured interviews with the CRM administrator, the Medical Affairs operations lead, the digital marketing manager, and the MDM data steward. It was not an IT exercise - it was a process and ownership exercise. The question being answered was: when a new HCP joins a hospital department, or changes specialty, or moves practice - who finds out, when, and which system gets updated first?
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">Data Flow Map - HCP Record Through Four Systems</div>
+          <div class="chart-sub">Where records originate, flow, and break down. Dashed lines indicate unsynchronised paths.</div>
+        </div>
+        <div class="chart-num">Chart 1 of 4</div>
+      </div>
+      <div style="height:340px; position:relative"><canvas id="chart1"></canvas></div>
+      <div class="legend">
+        <div class="legend-item"><div class="leg-box" style="background:#1C3F6E"></div>Sales CRM (Veeva)</div>
+        <div class="legend-item"><div class="leg-box" style="background:#2E7D55"></div>MDM (Master Data)</div>
+        <div class="legend-item"><div class="leg-box" style="background:#C07A1A"></div>Medical Affairs Platform</div>
+        <div class="legend-item"><div class="leg-box" style="background:#C0392B"></div>Marketing Automation</div>
+      </div>
+    </div>
+
+    <div class="alert">
+      <strong>Four gap points identified in the data flow</strong>
+      <strong>Gap 1 - MDM to CRM sync lag:</strong> The MDM updates the CRM quarterly, not in real time. HCP changes - job moves, retirement, specialty changes - sit in the MDM for up to 90 days before appearing in the rep's call list.<br><br>
+      <strong>Gap 2 - Medical Affairs records not flowing to MDM:</strong> 23% of HCPs in the Medical Affairs event platform do not exist in the MDM. Medical Affairs has been adding speakers and advisory board members directly without routing through the central record system.<br><br>
+      <strong>Gap 3 - Marketing opt-out states not propagating:</strong> An HCP who opts out of digital communications in Salesforce Marketing Cloud is not automatically suppressed in the CRM. Three hundred and twelve HCPs are in violation of this gap - they are receiving rep visit attempts from the CRM despite having digitally opted out.<br><br>
+      <strong>Gap 4 - No cross-system engagement view:</strong> No single system holds the total engagement picture for any HCP. A key opinion leader could have spoken at a medical affairs symposium, responded to a digital campaign, and been visited by three reps - and no one in any function would know all three had happened.
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">Analysis · Step 2</div>
+    <h2>Who is being engaged - and is it the right audience?</h2>
+    <p>
+      The data flow mapping explained the structural problem. The next step was to examine whether the engagement effort that was happening was going to the right HCPs. HCP value score was built from weighted criteria: prescribing volume (45%), institutional influence (25%), KOL or peer influence score (15%), recent therapy-area activity (10%), and channel accessibility (5%). This created the Tier 1, Tier 2, and Tier 3 segmentation used in the targeting analysis.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">Engagement Activity by HCP Tier - Actual vs Target Allocation</div>
+          <div class="chart-sub">Share of total annual engagement events by tier. Target allocation based on commercial value weighting.</div>
+        </div>
+        <div class="chart-num">Chart 2 of 4</div>
+      </div>
+      <div style="height:300px; position:relative"><canvas id="chart2"></canvas></div>
+      <div class="legend">
+        <div class="legend-item"><div class="leg-box" style="background:#1C3F6E"></div>Actual Engagement Share</div>
+        <div class="legend-item"><div class="leg-box" style="background:#B0BEC5"></div>Target Engagement Share</div>
+      </div>
+    </div>
+
+    <div class="finding">
+      <strong>Engagement is inverted relative to value</strong>
+      Tier 1 HCPs - who represent 18% of the target list but account for an estimated 52% of prescription volume in this therapy area - are receiving only 22% of total engagement activity, compared to a target allocation of 45%. Tier 3 HCPs are absorbing 41% of activity against a target of 20%. The engagement effort is structurally misallocated. This is not a market access problem - it is a targeting and data quality problem. The rep call lists drawn from the CRM are overweighting legacy contacts (many of whom are in Tier 3) because the CRM has not been updated to reflect current prescribing tier data.
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">Analysis · Step 3</div>
+    <h2>What does the engagement gap look like by segment?</h2>
+    <p>
+      The misallocation is not uniform across the HCP population. Three distinct segments emerged from an engagement frequency analysis: HCPs who are over-engaged (contacted more frequently than their tier warrants, with diminishing returns), HCPs who are appropriately engaged, and HCPs who are effectively invisible - contacted zero times in a twelve-month period despite holding high-tier status.
+    </p>
+    <p>
+      The invisible segment is the most commercially significant finding. Of the 756 Tier 1 HCPs in the active target list, 287 (38%) had zero logged interactions across all four systems in the preceding twelve months. In a therapy area where competitor activity is increasing, zero engagement from the company for twelve months is equivalent to ceding those relationships.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">HCP Engagement Frequency Distribution - Tier 1 and Tier 2</div>
+          <div class="chart-sub">Number of HCPs by annual interaction count. Benchmark: 8–12 interactions/year for Tier 1.</div>
+        </div>
+        <div class="chart-num">Chart 3 of 4</div>
+      </div>
+      <div style="height:320px; position:relative"><canvas id="chart3"></canvas></div>
+      <div class="legend">
+        <div class="legend-item"><div class="leg-box" style="background:#1C3F6E"></div>Tier 1 HCPs</div>
+        <div class="legend-item"><div class="leg-box" style="background:#C07A1A"></div>Tier 2 HCPs</div>
+      </div>
+    </div>
+
+    <div class="finding">
+      <strong>The distribution has two problems simultaneously</strong>
+      The right tail shows over-engagement: 94 Tier 1 HCPs are receiving more than 15 interactions per year. Industry benchmarks indicate that above 12 interactions per year for a Tier 1 HCP, response rates plateau and brand sentiment can deteriorate. The left spike is more serious: 287 Tier 1 HCPs at zero interactions is the most commercially damaging segment in the data. The company is simultaneously over-investing in a small group and abandoning a much larger high-value group, a pattern that only becomes visible when engagement data is consolidated across systems.
+    </div>
+
+    <table class="data-table" style="margin-top:24px">
+      <thead>
+        <tr><th>Segment</th><th>HCPs</th><th>Issue</th><th>Estimated Value at Risk</th><th>Response</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Invisible Tier 1</td><td class="mono">287</td><td>No contact in 12 months</td><td class="mono">~€5.7M</td><td>Immediate call list rebuild</td></tr>
+        <tr><td>Over-engaged Tier 1</td><td class="mono">94</td><td>&gt;15 interactions per year</td><td class="mono">€0.4M-€0.7M wasted effort</td><td>Reduce frequency, shift capacity</td></tr>
+        <tr><td>Tier 3 over-allocation</td><td class="mono">1,120</td><td>41% of activity vs 20% target</td><td class="mono">Low ROI capacity use</td><td>Reallocate rep time to Tier 1 and Tier 2</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">Analysis · Step 4</div>
+    <h2>What does a unified data model need to look like?</h2>
+    <p>
+      The three analytical steps have established what is happening. The final step is to define what would need to be true in a future state for this analysis to be unnecessary - that is, to specify the requirements for a unified HCP data model that gives all three functions a single, consistent view.
+    </p>
+    <p>
+      This is a requirements definition exercise, not a system architecture proposal. Each field was prioritised using three criteria: commercial impact, compliance exposure, and operational dependency. Fields scoring high on at least two criteria were classified as critical. This is why opt-out status, verified HCP ID, prescribing tier, and last interaction date are treated as minimum viable requirements.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">Data Quality Gap by Field - Current State vs Unified Model Requirement</div>
+          <div class="chart-sub">% of HCP records with field populated and validated across all four systems</div>
+        </div>
+        <div class="chart-num">Chart 4 of 4</div>
+      </div>
+      <div style="height:340px; position:relative"><canvas id="chart4"></canvas></div>
+      <div class="legend">
+        <div class="legend-item"><div class="leg-box" style="background:#C0392B"></div>Current State (all systems)</div>
+        <div class="legend-item"><div class="leg-box" style="background:#2E7D55"></div>Required Standard (unified model)</div>
+      </div>
+    </div>
+
+    <table class="data-table" style="margin-top:20px">
+      <thead>
+        <tr><th>Data Field</th><th>Current Coverage</th><th>Required Coverage</th><th>Ownership (Proposed)</th><th>Priority</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Verified HCP ID (OneKey)</td><td class="mono">61%</td><td class="mono">100%</td><td>MDM / Data Governance</td><td><span class="badge b-red">Critical</span></td></tr>
+        <tr><td>Primary Specialty (current)</td><td class="mono">78%</td><td class="mono">100%</td><td>MDM, updated from CRM</td><td><span class="badge b-red">Critical</span></td></tr>
+        <tr><td>Prescribing Tier (validated)</td><td class="mono">52%</td><td class="mono">95%</td><td>Commercial Analytics</td><td><span class="badge b-red">Critical</span></td></tr>
+        <tr><td>Institution / Affiliation</td><td class="mono">84%</td><td class="mono">100%</td><td>MDM, field-updated by reps</td><td><span class="badge b-amber">High</span></td></tr>
+        <tr><td>Digital Opt-Out Status</td><td class="mono">46%</td><td class="mono">100%</td><td>Marketing / Compliance</td><td><span class="badge b-red">Critical</span></td></tr>
+        <tr><td>Last Interaction Date (any channel)</td><td class="mono">39%</td><td class="mono">100%</td><td>Cross-system automated sync</td><td><span class="badge b-red">Critical</span></td></tr>
+        <tr><td>KOL / Influence Score</td><td class="mono">29%</td><td class="mono">80%</td><td>Medical Affairs</td><td><span class="badge b-amber">High</span></td></tr>
+        <tr><td>Engagement Channel Preference</td><td class="mono">18%</td><td class="mono">75%</td><td>Digital Marketing</td><td><span class="badge b-blue">Medium</span></td></tr>
+      </tbody>
+    </table>
+    <p class="footnote">Coverage figures reflect records with the field populated and consistent across ≥2 systems. Conflicts counted separately in data quality log.</p>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">Recommendations</div>
+    <h2>What the analysis points to</h2>
+    <p>
+      Actions are prioritised by compliance urgency first and commercial value second. The opt-out gap is addressed before targeting optimisation because it creates immediate regulatory exposure.
+    </p>
+
+    <div class="rec-list">
+      <div class="rec">
+        <div class="rec-n">1</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-urgent">Immediate</span>
+          <h4 class="urgent">Close the opt-out propagation gap - compliance risk is present today</h4>
+          <p>The 312 HCPs receiving rep contact despite digital opt-out status is not a data quality problem - it is a regulatory compliance problem under GDPR and the applicable national HCP communications codes. This needs to be resolved before any other data work proceeds. The opt-out state held in Salesforce Marketing Cloud should be treated as the authoritative suppression signal and immediately applied as an exclusion flag in the CRM. A daily automated sync between the two systems is the minimum resolution. Legal and compliance teams should be briefed before this analysis is communicated more broadly.</p><p>Expected impact: eliminate the immediate compliance breach and reduce avoidable non-compliant contact attempts to near zero within the first reporting cycle.</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="rec-n">2</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-urgent">Immediate</span>
+          <h4 class="urgent">Rebuild Tier 1 call lists using current prescribing tier data, not CRM legacy contacts</h4>
+          <p>The 287 unreached Tier 1 HCPs represent the most commercially urgent gap. The current call lists are distorted by CRM staleness - they reflect the prescribing tier landscape of two to three years ago. Using the IQVIA prescribing tier data as the current reference, new call lists should be built immediately for each market. Reps whose Tier 3 contacts have been displacing Tier 1 capacity should have their call plans rebalanced with a defined transition plan. This is the highest expected commercial return action in the short term.</p><p>Expected impact: recover 15-20% of the invisible Tier 1 segment within six months, protecting roughly €0.9M-€1.1M of annual relationship value.</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="rec-n">3</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-short">Short Term</span>
+          <h4>Establish MDM as the single source of truth with defined update protocols for all three functions</h4>
+          <p>The root cause of the four data gaps is the absence of a clear data ownership model. The MDM system should be formally designated as the HCP master record. Each function (Sales, Medical Affairs, Marketing) needs a defined protocol for how it adds, modifies, and flags changes to HCP records - and a defined SLA for how quickly those changes flow back to the MDM. Medical Affairs adding records directly to their event platform without MDM routing is the most immediate behaviour to change. This does not require a new system. It requires governance and enforcement of existing system architecture.</p><p>Expected impact: reduce conflicting HCP records by 60-70% over two quarters and improve reliability of call planning, event targeting, and consent management.</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="rec-n">4</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-medium">Medium Term</span>
+          <h4>Build a cross-system engagement dashboard with HCP-level last-contact visibility</h4>
+          <p>The inability to see a single HCP's total engagement picture is a structural management information gap. A lightweight cross-system dashboard - pulling interaction dates from the CRM, event attendance from the Medical Affairs platform, and digital engagement from Marketing Cloud - is the minimum viable solution. The dashboard does not require system integration at the data layer immediately. A monthly consolidated extract from each system, mapped to verified HCP IDs, is sufficient to start. The objective is to make "38% of Tier 1 HCPs unreached" a number that is visible to management before it becomes a commercial problem, not after.</p><p>Expected impact: create a recurring early warning system for HCP coverage gaps and reduce manual reconciliation effort across Sales, Marketing, and Medical Affairs.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">Model Notes</div>
+    <h2>Assumptions and limitations</h2>
+    <p>
+      HCP value at risk uses a conservative proxy of €20k annual relationship value per unreached Tier 1 HCP. Actual value would vary by therapy area, market access status, prescribing restrictions, and competitive intensity.
+    </p>
+    <p>
+      Tiering relies on prescribing volume and influence proxies. It should be validated against local medical and commercial teams before operational call plans are changed.
+    </p>
+    <p>
+      Data quality gaps are measured through cross-system consistency, not through direct verification with the HCP. A full remediation programme would require master data validation and consent record review.
+    </p>
+    <p>
+      The analysis identifies engagement misallocation and data governance gaps. It does not claim a direct causal estimate between each interaction and prescription volume.
+    </p>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">References</div>
+    <h2>Full citations</h2>
+    <ul style="font-size:13.5px; color:var(--muted); line-height:2.2; padding-left:18px">
+      <li>IQVIA Institute (2023). <em>The Global Use of Medicines 2023: Outlook to 2027</em>. Parsippany: IQVIA.</li>
+      <li>Veeva Systems (2023). <em>Veeva Pulse Field Trends Report Q4 2023</em>. Pleasanton: Veeva Systems.</li>
+      <li>EFPIA (2023). <em>EFPIA HCP/HCO Disclosure Report 2022</em>. Brussels: European Federation of Pharmaceutical Industries and Associations.</li>
+      <li>European Medicines Agency (2023). <em>HCP Engagement and Transparency: EU Framework Overview</em>. Amsterdam: EMA.</li>
+      <li>McKinsey &amp; Company (2022). <em>The Future of Pharma Commercial Models: HCP Engagement in the Digital Era</em>. New York: McKinsey.</li>
+      <li>Salesforce (2023). <em>State of the Connected Customer - Healthcare Edition 2023</em>. San Francisco: Salesforce.</li>
+    </ul>
+  </div>
+
+</div>
+
+<footer>
+  <span>Business Analyst Portfolio · Pharma &amp; Life Sciences Case 02 of 04</span>
+  <a href="#">← Back to Portfolio</a>
+</footer>
+
+<script>
+Chart.defaults.font.family = "'Source Sans 3', sans-serif";
+Chart.defaults.color = '#555';
+
+// Chart 1 - Data flow fragmentation (stacked bar showing record completeness across systems)
+(function(){
+  const systems = ['Sales CRM\n(Veeva)', 'MDM\n(Master)', 'Medical Affairs\nPlatform', 'Marketing\nCloud'];
+  new Chart(document.getElementById('chart1'), {
+    type: 'bar',
+    data: {
+      labels: ['Sales CRM (Veeva)', 'MDM (Master)', 'Med Affairs Platform', 'Marketing Cloud'],
+      datasets: [
+        { label: 'Records - Validated & Synced', data: [2480, 3900, 1820, 2100], backgroundColor: '#2E7D55', borderRadius: 0 },
+        { label: 'Records - Present but Conflicting', data: [820, 200, 340, 290], backgroundColor: '#C07A1A', borderRadius: 0 },
+        { label: 'Records - Stale / Not Updated', data: [680, 100, 280, 410], backgroundColor: '#C0392B', borderRadius: 0 },
+        { label: 'Records - Missing Entirely', data: [220, 0, 1760, 1400], backgroundColor: '#E8E6DF', borderRadius: 0 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
+      scales: {
+        x: { stacked: true, grid: { display: false } },
+        y: { stacked: true, title: { display: true, text: 'HCP Records' }, grid: { color: '#eee' } }
+      }
+    }
+  });
+})();
+
+// Chart 2 - Engagement allocation vs target by tier
+(function(){
+  new Chart(document.getElementById('chart2'), {
+    type: 'bar',
+    data: {
+      labels: ['Tier 1 (High Value)', 'Tier 2 (Regular)', 'Tier 3 (Occasional)'],
+      datasets: [
+        { label: 'Actual Engagement Share', data: [22, 37, 41], backgroundColor: '#1C3F6E', borderRadius: 2 },
+        { label: 'Target Engagement Share', data: [45, 35, 20], backgroundColor: '#B0BEC5', borderRadius: 2 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw}%` } } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { title: { display: true, text: 'Share of Total Engagement (%)' }, grid: { color: '#eee' }, max: 55, ticks: { callback: v => v + '%' } }
+      }
+    }
+  });
+})();
+
+// Chart 3 - HCP engagement frequency distribution
+(function(){
+  const buckets = ['0', '1–2', '3–5', '6–8', '9–12', '13–15', '>15'];
+  new Chart(document.getElementById('chart3'), {
+    type: 'bar',
+    data: {
+      labels: buckets,
+      datasets: [
+        { label: 'Tier 1 HCPs', data: [287, 143, 98, 112, 82, 34, 0], backgroundColor: '#1C3F6E', borderRadius: 2 },
+        { label: 'Tier 2 HCPs', data: [410, 480, 612, 398, 220, 64, 16], backgroundColor: '#C07A1A55', borderColor: '#C07A1A', borderWidth: 1, borderRadius: 2 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
+      scales: {
+        x: { grid: { display: false }, title: { display: true, text: 'Annual Interactions per HCP' } },
+        y: { title: { display: true, text: 'Number of HCPs' }, grid: { color: '#eee' } }
+      }
+    }
+  });
+})();
+
+// Chart 4 - Data quality gap: current vs required
+(function(){
+  const fields = ['Verified HCP ID', 'Primary Specialty', 'Prescribing Tier', 'Institution', 'Opt-Out Status', 'Last Interaction', 'KOL Score', 'Channel Preference'];
+  const current = [61, 78, 52, 84, 46, 39, 29, 18];
+  const required = [100, 100, 95, 100, 100, 100, 80, 75];
+  new Chart(document.getElementById('chart4'), {
+    type: 'bar',
+    data: {
+      labels: fields,
+      datasets: [
+        { label: 'Current State', data: current, backgroundColor: '#C0392B', borderRadius: 2 },
+        { label: 'Required Standard', data: required, backgroundColor: '#2E7D5540', borderColor: '#2E7D55', borderWidth: 1.5, borderRadius: 2 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 35 } },
+        y: { title: { display: true, text: 'Record Coverage (%)' }, grid: { color: '#eee' }, max: 110, ticks: { callback: v => v + '%' } }
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>

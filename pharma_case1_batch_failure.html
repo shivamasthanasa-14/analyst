@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Why Is This Batch Failing? - GMP Batch Failure Root Cause Analysis</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Source+Sans+3:wght@300;400;500;600&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #FAFAF7;
+    --surface:  #FFFFFF;
+    --border:   #E8E6DF;
+    --border2:  #D0CEC6;
+    --text:     #181818;
+    --muted:    #6B6860;
+    --faint:    #9B9890;
+    --accent:   #1C3F6E;
+    --green:    #2E7D55;
+    --red:      #C0392B;
+    --amber:    #C07A1A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: 'Source Sans 3', sans-serif; font-weight: 300; line-height: 1.8; font-size: 16px; }
+  nav { position: sticky; top: 0; z-index: 100; background: rgba(250,250,247,0.95); backdrop-filter: blur(6px); border-bottom: 1px solid var(--border); padding: 12px 48px; display: flex; align-items: center; justify-content: space-between; }
+  .nav-left { display: flex; align-items: center; gap: 10px; }
+  nav a { color: var(--muted); text-decoration: none; font-size: 13px; }
+  nav a:hover { color: var(--text); }
+  nav .sep { color: var(--border2); font-size: 12px; }
+  nav .current { color: var(--text); font-weight: 500; font-size: 13px; }
+  .nav-tag { font-family: 'Source Code Pro', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border: 1px solid var(--border2); color: var(--muted); border-radius: 2px; }
+  .hero { max-width: 800px; margin: 72px auto 0; padding: 0 48px; }
+  .case-label { font-family: 'Source Code Pro', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+  .case-label::after { content: ''; display: block; flex: 1; height: 1px; background: var(--border); max-width: 60px; }
+  h1 { font-family: 'Playfair Display', serif; font-size: clamp(30px, 4.5vw, 48px); line-height: 1.15; font-weight: 400; margin-bottom: 22px; letter-spacing: -0.02em; }
+  h1 em { font-style: italic; color: var(--accent); }
+  .hero-deck { font-size: 18px; color: var(--muted); font-weight: 300; line-height: 1.6; max-width: 640px; margin-bottom: 36px; }
+  .meta-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); border: 1px solid var(--border); border-radius: 3px; margin-bottom: 64px; overflow: hidden; }
+  .meta-cell { padding: 16px 20px; border-right: 1px solid var(--border); }
+  .meta-cell:last-child { border-right: none; }
+  .meta-cell label { display: block; font-family: 'Source Code Pro', monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); margin-bottom: 4px; }
+  .meta-cell span { font-size: 13px; font-weight: 500; }
+  .content { max-width: 800px; margin: 0 auto; padding: 0 48px 96px; }
+  .section { margin-bottom: 72px; }
+  .section-marker { font-family: 'Source Code Pro', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); margin-bottom: 12px; }
+  h2 { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 400; line-height: 1.25; margin-bottom: 20px; letter-spacing: -0.01em; }
+  h3 { font-family: 'Source Sans 3', sans-serif; font-size: 15px; font-weight: 600; margin: 28px 0 10px; }
+  p { margin-bottom: 18px; color: #2e2e2e; font-size: 15.5px; }
+  p:last-child { margin-bottom: 0; }
+  .source-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 20px 0; }
+  .source-table th { font-family: 'Source Code Pro', monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); padding: 10px 14px; border-bottom: 2px solid var(--border); text-align: left; font-weight: 500; }
+  .source-table td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.55; }
+  .source-table tr:last-child td { border-bottom: none; }
+  .source-name { font-weight: 500; color: var(--accent); }
+  .source-limit { font-size: 12px; color: var(--muted); margin-top: 3px; font-style: italic; }
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 20px 0; background: var(--surface); border: 1px solid var(--border); border-radius: 3px; overflow: hidden; }
+  .data-table th { font-family: 'Source Code Pro', monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); padding: 11px 14px; border-bottom: 2px solid var(--border); text-align: left; font-weight: 500; background: #F5F4F0; }
+  .data-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: #F9F8F5; }
+  .mono { font-family: 'Source Code Pro', monospace; font-size: 12px; }
+  .badge { display: inline-block; padding: 2px 7px; border-radius: 2px; font-size: 11px; font-weight: 500; }
+  .b-fail { background: #FDF0EF; color: #C0392B; }
+  .b-pass { background: #EBF5EF; color: #2E7D55; }
+  .b-warn { background: #FDF5E6; color: #C07A1A; }
+  .chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 3px; padding: 28px 28px 20px; margin: 24px 0; }
+  .chart-title-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); gap: 16px; flex-wrap: wrap; }
+  .chart-title { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 400; }
+  .chart-sub { font-size: 12px; color: var(--muted); font-style: italic; margin-top: 3px; }
+  .chart-num { font-family: 'Source Code Pro', monospace; font-size: 10px; color: var(--faint); white-space: nowrap; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; margin-top: 14px; color: var(--muted); }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .leg-box { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; }
+  .finding { border-left: 3px solid var(--accent); background: #F0F4FA; padding: 18px 22px; border-radius: 0 3px 3px 0; margin: 24px 0; font-size: 14.5px; color: #1a2a3a; line-height: 1.7; }
+  .finding strong { display: block; font-weight: 600; margin-bottom: 8px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+  .alert { border-left: 3px solid var(--red); background: #FDF0EF; padding: 18px 22px; border-radius: 0 3px 3px 0; margin: 24px 0; font-size: 14.5px; color: #2a1010; line-height: 1.7; }
+  .alert strong { display: block; font-weight: 600; margin-bottom: 8px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--red); }
+  .note { border-left: 3px solid var(--border2); background: #F5F4F0; padding: 14px 20px; border-radius: 0 3px 3px 0; margin: 18px 0; font-size: 13.5px; color: var(--muted); line-height: 1.65; }
+  .kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 3px; overflow: hidden; margin: 28px 0; }
+  .kpi { background: var(--surface); padding: 20px; }
+  .kpi-label { font-family: 'Source Code Pro', monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); margin-bottom: 8px; }
+  .kpi-val { font-family: 'Playfair Display', serif; font-size: 28px; line-height: 1; font-weight: 400; margin-bottom: 5px; }
+  .kpi-val.red { color: var(--red); }
+  .kpi-val.green { color: var(--green); }
+  .kpi-val.blue { color: var(--accent); }
+  .kpi-val.amber { color: var(--amber); }
+  .kpi-desc { font-size: 12px; color: var(--muted); line-height: 1.4; }
+  .pull { font-family: 'Playfair Display', serif; font-size: 20px; font-style: italic; line-height: 1.5; color: var(--accent); border-top: 2px solid var(--accent); border-bottom: 1px solid var(--border); padding: 22px 0; margin: 36px 0; }
+  .rec-list { margin: 24px 0; }
+  .rec { display: grid; grid-template-columns: 36px 1fr; gap: 16px; padding: 20px 0; border-bottom: 1px solid var(--border); align-items: start; }
+  .rec:last-child { border-bottom: none; }
+  .rec-n { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--border2); line-height: 1; padding-top: 4px; }
+  .rec-body h4 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .rec-body h4.urgent { color: var(--red); }
+  .rec-body p { font-size: 14px; color: var(--muted); margin: 0; line-height: 1.6; }
+  .rec-tag { display: inline-block; font-family: 'Source Code Pro', monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 7px; border-radius: 2px; margin-bottom: 6px; }
+  .tag-urgent { background: #FDF0EF; color: var(--red); }
+  .tag-short  { background: #FDF5E6; color: var(--amber); }
+  .tag-medium { background: #EBF5EF; color: var(--green); }
+  .tag-ongoing{ background: #EBF0F8; color: var(--accent); }
+  hr { border: none; border-top: 1px solid var(--border); margin: 56px 0; }
+  .footnote { font-family: 'Source Code Pro', monospace; font-size: 11px; color: var(--faint); margin-top: 10px; line-height: 1.6; }
+  footer { border-top: 1px solid var(--border); padding: 28px 48px; display: flex; justify-content: space-between; align-items: center; font-family: 'Source Code Pro', monospace; font-size: 11px; color: var(--faint); flex-wrap: wrap; gap: 8px; }
+  footer a { color: var(--faint); text-decoration: none; }
+  footer a:hover { color: var(--text); }
+
+  /* ── DOWNLOAD BAR ── */
+  .download-bar {
+    background: #F0F4FA;
+    border-top: 1px solid #D6E4F0;
+    border-bottom: 1px solid #D6E4F0;
+    padding: 14px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .download-bar-left {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 11px; letter-spacing: 0.06em;
+    color: #6B6860;
+  }
+  .download-bar-left svg { flex-shrink: 0; }
+  .download-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #C0392B;
+    color: #fff; text-decoration: none;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.06em;
+    padding: 9px 18px;
+    border-radius: 2px;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .download-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <a href="#">Portfolio</a>
+    <span class="sep">›</span>
+    <a href="#">Pharma &amp; Life Sciences</a>
+    <span class="sep">›</span>
+    <span class="current">Batch Failure Root Cause Analysis</span>
+  </div>
+  <div class="nav-tag">Case Study 05 · Pharma</div>
+</nav>
+
+<div class="hero">
+  <div class="case-label">Pharma &amp; Life Sciences · Manufacturing Quality</div>
+  <h1>Why Is This Batch Failing? - <em>Root Cause Analysis at a GMP Manufacturer</em></h1>
+  <p class="hero-deck">
+    A GMP-certified German pharmaceutical manufacturer was rejecting 12% of production batches - triple the industry benchmark. The data existed across four systems. No one had connected it to a cause.
+  </p>
+  <p class="hero-deck" style="margin-top:-18px;">
+    At an estimated €250k cost per failed commercial batch, the excess failure volume represents roughly €5M of avoidable annual quality cost before supply disruption or regulatory risk is considered.
+  </p>
+  <div class="meta-strip">
+    <div class="meta-cell"><label>Sector</label><span>Pharma Manufacturing</span></div>
+    <div class="meta-cell"><label>Site</label><span>GMP · Germany</span></div>
+    <div class="meta-cell"><label>Failure Rate</label><span>12% of batches</span></div>
+    <div class="meta-cell"><label>Benchmark</label><span>3–4% industry avg</span></div>
+    <div class="meta-cell"><label>Root Cause</label><span>3 of 4 identified</span></div>
+  </div>
+</div>
+
+<div class="download-bar">
+  <div class="download-bar-left">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <rect x="1.5" y="1.5" width="13" height="13" rx="1.5" stroke="#C0392B" stroke-width="1.2"/>
+      <path d="M5 7.5h6M5 5h4M5 10h3" stroke="#C0392B" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>
+    This case includes a downloadable Excel workbook - data model, calculations, and dashboard.
+  </div>
+  <a href="Pharma_Case1_Batch_Failure.xlsx" download class="download-btn">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <path d="M6.5 1v8M3.5 6.5l3 3 3-3M1 11h11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Download Excel Working File
+  </a>
+</div>
+
+<div class="content">
+
+  <div class="section">
+    <div class="section-marker">Context</div>
+    <h2>Why this problem matters</h2>
+    <p>
+      In pharmaceutical manufacturing, a failed batch is not simply a production loss. Every rejection triggers a deviation report, a quality investigation, and a review by the site's QA function. If the batch was destined for a regulated market, it may also require regulatory notification. The cumulative cost - direct material, labour, QA investigation time, and supply gap risk - typically runs to several hundred thousand euros per failed batch at commercial scale.
+    </p>
+    <p>
+      A 12% batch failure rate at a GMP-certified site is a signal that demands investigation. The industry reference point, drawn from EMA GMP compliance data and published manufacturing quality benchmarks, puts the expected range for solid oral dosage forms at 3–4%. Failures beyond that range typically indicate a systematic process problem rather than random variation.
+    </p>
+    <p>
+      The challenge at this site was not a lack of data. The manufacturing execution system (MES), the laboratory information management system (LIMS), the equipment maintenance logs, and the environmental monitoring system were all capturing data continuously. The problem was that nobody had structured a cross-system view to ask: which batches are failing, under what conditions, and what do those conditions have in common?
+    </p>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">Data Foundation</div>
+    <h2>Data sources and their role in this analysis</h2>
+    <p>
+      Operational data from individual manufacturing sites is proprietary. The analysis here uses published regulatory benchmarks, public EMA and FDA inspection data, and peer-reviewed manufacturing quality literature as the reference framework, with illustrative batch-level data constructed to reflect the documented failure patterns at sites of comparable type and scale.
+    </p>
+
+    <table class="source-table">
+      <thead>
+        <tr><th>Source</th><th>What it provided</th><th>Used for</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="source-name">EMA GMP Compliance Reports 2022–2023</div>
+            <div class="source-limit">Covers EU-authorised sites. Non-EU sites inspected under MRA not always fully disclosed.</div>
+          </td>
+          <td>Batch failure rates and deviation categories at inspected EU manufacturing sites. Common deficiency types by product class.</td>
+          <td>Benchmark failure rate range (3–4%) for solid oral dosage forms. Top deviation categories by frequency.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">FDA CDER Process Analytical Technology Guidance</div>
+            <div class="source-limit">US regulatory guidance; EU applicability is by analogy. ICH Q10 provides the EU equivalent.</div>
+          </td>
+          <td>Framework for identifying critical process parameters (CPPs) and their relationship to critical quality attributes (CQAs).</td>
+          <td>Methodological basis for linking process variables to failure outcomes.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">ICH Q9 Quality Risk Management Guideline</div>
+            <div class="source-limit">Framework document. Application requires site-specific process knowledge.</div>
+          </td>
+          <td>FMEA methodology and risk ranking approach for pharmaceutical manufacturing deviations.</td>
+          <td>Structure for ranking root causes by severity, occurrence frequency, and detectability.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">PDA Technical Report No. 54 - Out-of-Specification Investigations</div>
+            <div class="source-limit">Industry body guidance. Not regulatory binding but widely adopted in EU GMP practice.</div>
+          </td>
+          <td>OOS investigation protocols and common assignable cause categories in solid dosage manufacturing.</td>
+          <td>Reference for classifying batch failure modes and investigation workflow.</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="source-name">Siegfried / Recipharm / Lonza Public Quality Disclosures</div>
+            <div class="source-limit">Voluntary disclosures; comparability limited. Sites vary significantly in product mix and age.</div>
+          </td>
+          <td>Published OOS rates and quality metrics from contract manufacturers operating German GMP sites.</td>
+          <td>Cross-check on benchmark range and common deviation categories at comparable European sites.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">The Situation</div>
+    <h2>What the site was facing</h2>
+    <p>
+      The site produces twelve product lines across three manufacturing suites - solid oral dosage forms (tablets and capsules) in Suites A and B, and a semi-solid topical line in Suite C. Over the eighteen months preceding the analysis, the quality team had recorded 47 batch failures across 392 production batches. That is a failure rate of 12.0% - roughly three times the expected rate for the product types being manufactured.
+    </p>
+
+    <div class="pull">
+      "Quality had been logging every deviation. Operations had been logging every equipment event. Nobody had asked what they looked like together."
+    </div>
+
+    <p>
+      Each failure had a deviation report. Each report had a stated cause. But the stated causes - "operator error," "equipment malfunction," "raw material variability" - had been recorded at the incident level, not analysed across incidents for pattern. The business problem was not only the 12% failure rate. It was the inability to separate random deviations from repeatable, preventable failure patterns.
+    </p>
+
+    <table class="data-table">
+      <thead>
+        <tr><th>Suite</th><th>Product Type</th><th>Batches Run</th><th>Failures</th><th>Failure Rate</th><th>Industry Benchmark</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Suite A</td><td>Tablets (solid oral)</td><td class="mono">168</td><td class="mono">24</td><td class="mono"><span class="badge b-fail">14.3%</span></td><td class="mono">3–4%</td></tr>
+        <tr><td>Suite B</td><td>Capsules (solid oral)</td><td class="mono">142</td><td class="mono">17</td><td class="mono"><span class="badge b-fail">12.0%</span></td><td class="mono">3–4%</td></tr>
+        <tr><td>Suite C</td><td>Topical semi-solid</td><td class="mono">82</td><td class="mono">6</td><td class="mono"><span class="badge b-warn">7.3%</span></td><td class="mono">5–7%</td></tr>
+        <tr><td><strong>Total</strong></td><td></td><td class="mono"><strong>392</strong></td><td class="mono"><strong>47</strong></td><td class="mono"><strong>12.0%</strong></td><td class="mono"><strong>3–5%</strong></td></tr>
+      </tbody>
+    </table>
+    <p class="footnote">Suite C failure rate is elevated relative to its benchmark but substantially less so than Suites A and B. Analysis focused on Suites A and B where deviation from benchmark is most severe.</p>
+
+    <div class="kpi-strip">
+      <div class="kpi">
+        <div class="kpi-label">Overall Failure Rate</div>
+        <div class="kpi-val red">12.0%</div>
+        <div class="kpi-desc">Against a 3–4% industry benchmark for solid oral dosage forms</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Excess Failures (vs benchmark)</div>
+        <div class="kpi-val red">~32</div>
+        <div class="kpi-desc">Batches rejected above what the benchmark rate would predict</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Worst Suite</div>
+        <div class="kpi-val amber">Suite A</div>
+        <div class="kpi-desc">14.3% failure rate - tablets line, primary focus of investigation</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Months of Data</div>
+        <div class="kpi-val blue">18</div>
+        <div class="kpi-desc">Enough for seasonal and shift-pattern analysis</div>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">Analysis · Step 1</div>
+    <h2>What failure modes are actually occurring?</h2>
+    <p>
+      The first step was to reclassify the 47 deviation reports from their original stated causes into standardised failure mode categories. The original records used inconsistent terminology - what one operator logged as "blending issue" another had recorded as "content uniformity OOS." Mapping all records to four standardised categories was necessary before any frequency analysis was meaningful.
+    </p>
+    <p>
+      The four categories used follow the PDA Technical Report No. 54 classification: content uniformity (active ingredient distribution failures), dissolution/release profile (drug release outside specification), physical attributes (appearance, hardness, friability, weight variation), and microbiological/environmental (sterility or bioburden exceedances). The distribution of failures across these categories shapes where the investigation goes next.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">Batch Failure Distribution by Mode - Suites A &amp; B Combined</div>
+          <div class="chart-sub">47 failures reclassified from deviation report language into standardised categories</div>
+        </div>
+        <div class="chart-num">Chart 1 of 4</div>
+      </div>
+      <div style="height:300px; position:relative"><canvas id="chart1"></canvas></div>
+      <div class="legend">
+        <div class="legend-item"><div class="leg-box" style="background:#C0392B"></div>Content Uniformity</div>
+        <div class="legend-item"><div class="leg-box" style="background:#F5A623"></div>Dissolution / Release</div>
+        <div class="legend-item"><div class="leg-box" style="background:#5B9BD5"></div>Physical Attributes</div>
+        <div class="legend-item"><div class="leg-box" style="background:#B0BEC5"></div>Microbiological / Environmental</div>
+      </div>
+    </div>
+
+    <div class="finding">
+      <strong>The failure profile is not random</strong>
+      Content uniformity failures account for 53% of all rejections. Dissolution failures add a further 26%. Together, these two categories - both of which relate directly to how the active ingredient behaves during and after the granulation and blending process - represent nearly 80% of the failure volume. Physical attribute failures are close to the expected rate for the product type. Microbiological failures are minimal. The failure signature points clearly at the wet granulation process in Suite A and the equivalent blending stage in Suite B.
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">Analysis · Step 2</div>
+    <h2>When and under what conditions are failures clustering?</h2>
+    <p>
+      With content uniformity and dissolution failures identified as the dominant modes, the next question was whether they were distributed randomly across time and production conditions, or whether they clustered. Clustering indicates assignable cause; random distribution suggests either measurement issues or inherent process capability problems.
+    </p>
+    <p>
+      Three variables were examined against the failure record: production shift (morning, afternoon, night), the age of the granulator equipment at the time of production, and the time elapsed since the granulator's last preventive maintenance service. The shift and equipment variables were cross-referenced using maintenance logs and the MES batch record timestamps.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">Failure Rate by Production Shift and Equipment Age Quartile</div>
+          <div class="chart-sub">Content uniformity and dissolution failures only - Suites A &amp; B</div>
+        </div>
+        <div class="chart-num">Chart 2 of 4</div>
+      </div>
+      <div style="height:320px; position:relative"><canvas id="chart2"></canvas></div>
+      <div class="legend">
+        <div class="legend-item"><div class="leg-box" style="background:#1C3F6E"></div>Morning Shift</div>
+        <div class="legend-item"><div class="leg-box" style="background:#C07A1A"></div>Afternoon Shift</div>
+        <div class="legend-item"><div class="leg-box" style="background:#C0392B"></div>Night Shift</div>
+      </div>
+    </div>
+
+    <div class="alert">
+      <strong>Two patterns visible, one dominant</strong>
+      Night shift failure rates are consistently 2.0–2.5× higher than morning shift across all equipment age quartiles. The gap is largest in the oldest equipment quartile, where night shift content uniformity failures run at 28% compared to 11% on mornings. This is a shift-and-equipment interaction, not either variable independently. A granulator in its oldest quartile running at night is the highest-risk configuration in the plant - and it is not being managed as such.
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">Analysis · Step 3</div>
+    <h2>What is the role of maintenance intervals?</h2>
+    <p>
+      The shift and equipment age analysis identified the highest-risk configuration. The next question was whether preventive maintenance scheduling was a contributing factor - specifically, whether failure probability increased as the time since last PM service increased, and whether that effect was large enough to constitute an independent root cause.
+    </p>
+    <p>
+      PM records for the eight granulators across Suites A and B were extracted and matched to batch failure events by equipment ID and production date. The PM schedule called for servicing every 90 days. Actual intervals were calculated from the records. The analysis then bucketed failures by how many days post-PM the batch was produced.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">Failure Rate vs Days Since Last Preventive Maintenance Service</div>
+          <div class="chart-sub">All content uniformity and dissolution failures, Suite A &amp; B granulators combined</div>
+        </div>
+        <div class="chart-num">Chart 3 of 4</div>
+      </div>
+      <div style="height:300px; position:relative"><canvas id="chart3"></canvas></div>
+    </div>
+
+    <div class="finding">
+      <strong>Maintenance intervals are a confirmed risk factor</strong>
+      Failure rate within 30 days of a PM service runs at approximately 5% - close to the industry benchmark. Between 30 and 60 days it rises to 9%. Beyond 90 days - which the PM schedule defines as the maximum interval - failures run at 18%. Eleven of the 18 month period's batches were produced on equipment more than 90 days past its scheduled PM. Eight of those eleven failed. The PM schedule is not being adhered to, and the consequence in failure rate terms is substantial. This is a separate root cause from the shift pattern, not an alternative explanation.
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">Analysis · Step 4</div>
+    <h2>Building the root cause picture</h2>
+    <p>
+      Three independent variables have now been shown to correlate with elevated failure rates: failure mode concentration in granulation-related categories; night shift production on older equipment; and PM interval overruns. The final analytical step was to determine how these factors compound - because the question for management is not "which of these is the root cause" but "how much of the 12% failure rate can each factor account for, and in what combination?"
+    </p>
+    <p>
+      An FMEA-style risk scoring was applied to each identified factor using ICH Q9 methodology: severity (impact on patient safety and product quality), occurrence (frequency based on batch records), and detectability (whether the condition is currently flagged before a batch fails). Each factor was scored on a 1-10 scale, then multiplied to create the risk priority number (RPN). This makes the prioritisation logic explicit rather than relying on frequency alone.
+    </p>
+
+    <div class="chart-wrap">
+      <div class="chart-title-row">
+        <div>
+          <div class="chart-title">Root Cause Risk Priority Numbers - FMEA Scoring (ICH Q9)</div>
+          <div class="chart-sub">Severity × Occurrence × Detectability. Higher RPN = higher intervention priority.</div>
+        </div>
+        <div class="chart-num">Chart 4 of 4</div>
+      </div>
+      <div style="height:300px; position:relative"><canvas id="chart4"></canvas></div>
+    </div>
+
+    <div class="kpi-strip">
+      <div class="kpi">
+        <div class="kpi-label">Root Cause #1</div>
+        <div class="kpi-val red">PM Overruns</div>
+        <div class="kpi-desc">RPN 336 - highest. Controllable immediately. 8 of 11 overrun batches failed.</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Root Cause #2</div>
+        <div class="kpi-val amber">Night Shift Gap</div>
+        <div class="kpi-desc">RPN 252. Likely a supervision and training gap. Requires structured investigation.</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Root Cause #3</div>
+        <div class="kpi-val blue">Equipment Age</div>
+        <div class="kpi-desc">RPN 168. Amplifier, not independent cause. Requires capital planning.</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Unexplained Residual</div>
+        <div class="kpi-val blue">~20%</div>
+        <div class="kpi-desc">Of failures not fully explained by these three factors. Raw material variability is the working hypothesis.</div>
+      </div>
+    </div>
+
+    <div class="note">
+      The three identified root causes together account for an estimated 80% of the excess failure volume above the industry benchmark. The remaining ~20% of excess failures did not cluster around any of the tested variables and are not explained by this analysis. Raw material variability - specifically the particle size distribution of the active ingredient from two suppliers - is the working hypothesis for the residual and would require a dedicated supplier quality investigation to confirm or rule out.
+    </div>
+
+    <table class="data-table" style="margin-top:24px">
+      <thead>
+        <tr><th>Root Cause</th><th>Estimated Excess Failures / Year</th><th>Estimated Cost at Risk</th><th>Control Lever</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>PM interval overruns</td><td class="mono">8-10</td><td class="mono">€2.0M-€2.5M</td><td>Hard stop on overdue equipment</td></tr>
+        <tr><td>Night shift quality gap</td><td class="mono">6-8</td><td class="mono">€1.5M-€2.0M</td><td>Shift-level training, supervision, CPP adherence</td></tr>
+        <tr><td>Equipment age amplification</td><td class="mono">3-5</td><td class="mono">€0.8M-€1.3M</td><td>Targeted replacement or refurbishment</td></tr>
+        <tr><td>Residual supplier variability</td><td class="mono">3-4</td><td class="mono">€0.7M-€1.0M</td><td>Supplier quality investigation</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">Recommendations</div>
+    <h2>What the analysis points to</h2>
+    <p>Four actions follow from the root cause findings. They are ordered by speed of impact and controllability: actions that can immediately reduce failed batches are prioritised before longer-term investigations and capital planning.</p>
+
+    <div class="rec-list">
+      <div class="rec">
+        <div class="rec-n">1</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-urgent">Immediate</span>
+          <h4 class="urgent">Enforce PM schedule adherence - halt batches on overdue equipment</h4>
+          <p>PM interval overruns are the highest-RPN root cause and the only one fully within operations' control today. A policy should be implemented immediately: no batch starts on a granulator more than 90 days past its last PM. A real-time equipment status dashboard linked to the CMMS - showing days to next service for each unit - is the operational tool that makes this enforceable without additional labour. Expected failure rate reduction: 3–4 percentage points based on the overrun batch analysis.</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="rec-n">2</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-short">Short Term</span>
+          <h4>Investigate and close the night shift quality gap</h4>
+          <p>A 2–2.5× higher failure rate on night shift, consistent across equipment age groups, points to a supervision, training, or process adherence gap - not a random effect. The investigation should compare the granulation process records between shifts for in-process check compliance, operator certification levels, and supervisor-to-operator ratios. The hypothesis that night shift operators are less rigorously following the critical process parameters for blending time and granulation endpoint should be tested directly against the MES process records.</p><p>Expected impact: 2-3 percentage point failure rate reduction if night-shift deviation rates are brought within 20% of morning-shift performance.</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="rec-n">3</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-medium">Medium Term</span>
+          <h4>Develop a capital plan for granulator replacement in the oldest equipment quartile</h4>
+          <p>The oldest equipment quartile is amplifying the effects of both the PM overrun and the night shift gap. Equipment age alone does not cause failures - but aged equipment is less tolerant of process variability and maintenance slippage. The site engineering team should produce a replacement cost-benefit analysis within 90 days, modelling the failure rate reduction achievable through granulator replacement against the capital cost, with NPV calculated at the current cost per failed batch.</p><p>Expected impact: €0.8M-€1.3M annual avoided failure cost, with additional upside from lower maintenance interventions and improved schedule reliability.</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="rec-n">4</div>
+        <div class="rec-body">
+          <span class="rec-tag tag-ongoing">Ongoing</span>
+          <h4>Launch a targeted supplier quality investigation into raw material particle size variation</h4>
+          <p>The residual ~20% of unexplained excess failures does not cluster by equipment, shift, or maintenance interval. The two active ingredient suppliers showing the widest particle size distribution variation should be the starting point. Incoming material test data from the past 18 months should be matched against the failure event dates to test whether OOS batches correlate with specific supplier lots. This is a longer-duration investigation but addresses the only identified failure driver not yet confirmed or ruled out.</p><p>Expected impact: reduce residual unexplained failures by up to 20% if supplier lot variability is confirmed and controlled.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">Model Notes</div>
+    <h2>Assumptions and limitations</h2>
+    <p>
+      The batch-level dataset is illustrative and calibrated to published GMP manufacturing benchmarks. Actual site-level deviation data is proprietary and would require validated MES, LIMS, CMMS, and QA records for operational use.
+    </p>
+    <p>
+      Cost impact assumes €250k per failed commercial batch, including material, labour, QA investigation time, and lost production capacity. It excludes potential regulatory costs, backorder penalties, and customer supply risk.
+    </p>
+    <p>
+      FMEA scores are directional and intended for prioritisation. Final CAPA planning would require QA validation, process owner review, and documented investigation under the site pharmaceutical quality system.
+    </p>
+    <p>
+      The residual supplier variability hypothesis is not confirmed in this case. It is identified as the next testable workstream, not as a proven root cause.
+    </p>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <div class="section-marker">References</div>
+    <h2>Full citations</h2>
+    <ul style="font-size:13.5px; color:var(--muted); line-height:2.2; padding-left:18px">
+      <li>European Medicines Agency (2023). <em>GMP/GDP Compliance: Annual Report on Inspections 2022</em>. Amsterdam: EMA.</li>
+      <li>ICH (2005). <em>ICH Q9: Quality Risk Management</em>. International Council for Harmonisation of Technical Requirements for Pharmaceuticals for Human Use.</li>
+      <li>ICH (2008). <em>ICH Q10: Pharmaceutical Quality System</em>. International Council for Harmonisation.</li>
+      <li>FDA CDER (2004). <em>Guidance for Industry: PAT - A Framework for Innovative Pharmaceutical Development, Manufacturing, and Quality Assurance</em>. Rockville: US FDA.</li>
+      <li>Parenteral Drug Association (2012). <em>Technical Report No. 54: Out-of-Specification Investigations for Pharmaceutical Products</em>. Bethesda: PDA.</li>
+      <li>Siegfried AG (2023). <em>Annual Report 2022 - Quality Performance Metrics</em>. Zofingen: Siegfried.</li>
+      <li>Recipharm AB (2023). <em>Annual Report and Sustainability Report 2022</em>. Stockholm: Recipharm.</li>
+    </ul>
+  </div>
+
+</div>
+
+<footer>
+  <span>Business Analyst Portfolio · Pharma &amp; Life Sciences Case 01 of 04</span>
+  <a href="#">← Back to Portfolio</a>
+</footer>
+
+<script>
+Chart.defaults.font.family = "'Source Sans 3', sans-serif";
+Chart.defaults.color = '#555';
+
+// Chart 1 - Failure mode distribution (donut)
+(function(){
+  new Chart(document.getElementById('chart1'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Content Uniformity', 'Dissolution / Release', 'Physical Attributes', 'Microbiological / Environmental'],
+      datasets: [{
+        data: [25, 12, 7, 3],
+        backgroundColor: ['#C0392B', '#F5A623', '#5B9BD5', '#B0BEC5'],
+        borderWidth: 2, borderColor: '#fff'
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '60%',
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw} failures (${Math.round(ctx.raw/47*100)}%)` } }
+      }
+    }
+  });
+})();
+
+// Chart 2 - Failure rate by shift and equipment age quartile
+(function(){
+  const labels = ['Q1 (Newest)', 'Q2', 'Q3', 'Q4 (Oldest)'];
+  new Chart(document.getElementById('chart2'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Morning Shift', data: [4, 6, 9, 11], backgroundColor: '#1C3F6E', borderRadius: 2 },
+        { label: 'Afternoon Shift', data: [5, 8, 12, 17], backgroundColor: '#C07A1A', borderRadius: 2 },
+        { label: 'Night Shift', data: [9, 14, 20, 28], backgroundColor: '#C0392B', borderRadius: 2 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { title: { display: true, text: 'Failure Rate (%)' }, grid: { color: '#eee' }, max: 35,
+             ticks: { callback: v => v + '%' } }
+      }
+    }
+  });
+})();
+
+// Chart 3 - Failure rate vs days since PM
+(function(){
+  new Chart(document.getElementById('chart3'), {
+    type: 'bar',
+    data: {
+      labels: ['0–30 days', '31–60 days', '61–90 days', '91–120 days', '>120 days'],
+      datasets: [{
+        label: 'Failure Rate (%)',
+        data: [5, 9, 14, 18, 24],
+        backgroundColor: ['#2E7D55', '#C07A1A', '#C07A1A', '#C0392B', '#C0392B'],
+        borderRadius: 2
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, title: { display: true, text: 'Days Since Last PM Service' } },
+        y: { title: { display: true, text: 'Failure Rate (%)' }, grid: { color: '#eee' }, max: 30,
+             ticks: { callback: v => v + '%' } }
+      }
+    }
+  });
+})();
+
+// Chart 4 - FMEA RPN horizontal bar
+(function(){
+  new Chart(document.getElementById('chart4'), {
+    type: 'bar',
+    data: {
+      labels: ['PM Interval Overruns', 'Night Shift Quality Gap', 'Equipment Age (Amplifier)', 'Raw Material Variability (Residual)'],
+      datasets: [{
+        label: 'Risk Priority Number (RPN)',
+        data: [336, 252, 168, 112],
+        backgroundColor: ['#C0392B', '#C07A1A', '#5B9BD5', '#B0BEC5'],
+        borderRadius: 2
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { title: { display: true, text: 'Risk Priority Number (Severity × Occurrence × Detectability)' }, grid: { color: '#eee' }, max: 400 },
+        y: { grid: { display: false }, ticks: { font: { size: 12 } } }
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>
